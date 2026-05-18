@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Protocol - Terminal</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #d4af37;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        #console {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .output-line { margin-bottom: 5px; }
+        .system-msg { color: #8c8c8c; }
+        .alert-msg { color: #ea4335; font-weight: bold; }
+        .success-msg { color: #00ff00; }
+        .input-line {
+            display: flex;
+            margin-top: 20px;
+        }
+        .prompt { margin-right: 10px; color: #ffffff; }
+        input[type="text"] {
+            background: transparent;
+            border: none;
+            color: #d4af37;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            flex-grow: 1;
+            outline: none;
+        }
+        /* Hidden file input for the Altar offering */
+        #offering-upload { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="console">
+    <div id="output"></div>
+    <div class="input-line">
+        <span class="prompt">_></span>
+        <input type="text" id="cmd-input" autocomplete="off" autofocus>
+    </div>
+    <input type="file" id="offering-upload" accept="image/*">
+</div>
+
+<script>
+    // Game State Management (Referencing Foundation Game Design PDF)
+    const STATES = { LOGIN: 0, PLAYING: 1, ALPHA: 2 };
+    let currentState = STATES.LOGIN;
+    let playerName = "";
+    
+    // 2D Array Map (3x3 Grid)
+    // [0,0] [1,0] [2,0]
+    // [0,1] [1,1] [2,1]
+    // [0,2] [1,2] [2,2]
+    const map = [
+        ["Edge of the Wastes", "Northern Dunes", "Scorched Ruins"],
+        ["Western Sands", "THE OBSIDIAN LAIR", "Eastern Ridge"],
+        ["Southern Expanse", "Sunken Valley", "Forgotten Path"]
+    ];
+    let px = 0; // Player X
+    let py = 0; // Player Y
+
+    const outputDiv = document.getElementById("output");
+    const inputField = document.getElementById("cmd-input");
+    const fileInput = document.getElementById("offering-upload");
+
+    function print(text, className = "") {
+        const line = document.createElement("div");
+        line.className = "output-line " + className;
+        line.innerHTML = text;
+        outputDiv.appendChild(line);
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    // Initial Boot Sequence
+    print("INITIALIZING SOVEREIGN PROTOCOL...", "system-msg");
+    print("ENCRYPTION: ENABLED", "system-msg");
+    print("SERVER: LIVE", "system-msg");
+    print("<br>ENTER IDENTIFIER:");
+
+    // Simulated Multiplayer Ghost Logic
+    function triggerGhostEvents() {
+        if(currentState !== STATES.PLAYING) return;
+        const events = [
+            "WOLF-04 has entered the adjacent sector.",
+            "WARNING: WOLF-02 is moving rapidly towards the center.",
+            "A distant howl echoes. Another wolf is fighting for the Alpha's attention.",
+            "WOLF-04 defeated a lesser rival. She is gaining ground."
+        ];
+        const randomEvent = events[Math.floor(Math.random() * events.length)];
+        print("<br>" + randomEvent, "alert-msg");
+    }
+    
+    // Ghost timer runs every 15-30 seconds
+    setInterval(() => {
+        if (Math.random() > 0.5) triggerGhostEvents();
+    }, 20000);
+
+    // Command Parser
+    inputField.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            const val = inputField.value.trim().toUpperCase();
+            inputField.value = "";
+            if (!val) return;
+
+            print(`<br><span style="color:#fff">_> ${val}</span>`);
+
+            if (currentState === STATES.LOGIN) {
+                handleLogin(val);
+            } else if (currentState === STATES.PLAYING) {
+                handlePlayCommand(val);
+            } else if (currentState === STATES.ALPHA) {
+                handleAlphaCommand(val);
+            }
+        }
+    });
+
+    function handleLogin(val) {
+        if (val === "JERRY") {
+            currentState = STATES.ALPHA;
+            print("BIOMETRICS CONFIRMED. WELCOME BACK, ARCHITECT.", "success-msg");
+            print("Type 'STATUS' to view the arena.");
+        } else {
+            playerName = val;
+            currentState = STATES.PLAYING;
+            print(`IDENTIFIER ACCEPTED: ${playerName}`, "success-msg");
+            print("You have been dropped into the Sovereign Wastes.");
+            print("The Alpha's Lair is hidden in the center of the grid. Find it.");
+            print("COMMANDS: NORTH, SOUTH, EAST, WEST, LOOK");
+            look();
+        }
+    }
+
+    function look() {
+        print(`<br>LOCATION: ${map[py][px]}`, "system-msg");
+        if (px === 1 && py === 1) {
+            print("You stand before the Obsidian Altar in the center of the Lair.", "success-msg");
+            print("Keisha is watching from the shadows. The Alpha demands your visual proof.");
+            print("Type 'OFFER' to upload your photo and claim your seat.");
+        } else {
+            print("The desert is empty here. The Lair is elsewhere.");
+        }
+    }
+
+    function handlePlayCommand(cmd) {
+        if (cmd === "LOOK") {
+            look();
+        } else if (cmd === "NORTH") {
+            if (py > 0) { py--; look(); } else { print("The wasteland blocks your path."); }
+        } else if (cmd === "SOUTH") {
+            if (py < 2) { py++; look(); } else { print("The wasteland blocks your path."); }
+        } else if (cmd === "WEST") {
+            if (px > 0) { px--; look(); } else { print("The wasteland blocks your path."); }
+        } else if (cmd === "EAST") {
+            if (px < 2) { px++; look(); } else { print("The wasteland blocks your path."); }
+        } else if (cmd === "OFFER" && px === 1 && py === 1) {
+            print("Opening secure channel for visual upload...", "system-msg");
+            fileInput.click();
+        } else {
+            print("COMMAND NOT RECOGNIZED.");
+        }
+    }
+
+    function handleAlphaCommand(cmd) {
+        if (cmd === "STATUS") {
+            print("<br>--- ARENA STATUS ---", "system-msg");
+            print("WOLF-01 (Amanda) : LOCATION [0,1] - Panicking, moving EAST.");
+            print("WOLF-04 (Ghost)  : LOCATION [1,2] - Moving NORTH to Altar.");
+            print("WOLF-02 (Ghost)  : DEFEATED.");
+            print("Awaiting offerings in the Lair.");
+        } else {
+            print("COMMAND NOT RECOGNIZED.");
+        }
+    }
+
+    // Handle File Upload Completion
+    fileInput.addEventListener("change", function() {
+        if (this.files && this.files[0]) {
+            print("<br>TRANSMITTING VISUAL DATA...", "system-msg");
+            setTimeout(() => {
+                print("OFFERING ACCEPTED. THE QUEEN IS REVIEWING YOUR SUBMISSION.", "success-msg");
+                print("Your stats have been locked. Wait for the Alpha's invitation to the Suite.");
+            }, 2000);
+        }
+    });
+</script>
+
+</body>
+</html>
