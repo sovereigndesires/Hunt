@@ -2,198 +2,577 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Protocol - Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sovereign Protocol | The Proving Grounds</title>
     <style>
-        body {
-            background-color: #050505;
-            color: #d4af37;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-        #console {
-            max-width: 800px;
-            margin: 0 auto;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .output-line { margin-bottom: 5px; }
-        .system-msg { color: #8c8c8c; }
-        .alert-msg { color: #ea4335; font-weight: bold; }
-        .success-msg { color: #00ff00; }
-        .input-line {
-            display: flex;
-            margin-top: 20px;
-        }
-        .prompt { margin-right: 10px; color: #ffffff; }
-        input[type="text"] {
-            background: transparent;
-            border: none;
-            color: #d4af37;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            flex-grow: 1;
-            outline: none;
-        }
-        /* Hidden file input for the Altar offering */
-        #offering-upload { display: none; }
+        body { background-color: #050505; color: #d4af37; font-family: 'Georgia', serif; text-align: center; margin: 0; padding: 0; overflow: hidden; touch-action: none; }
+        
+        #alpha-broadcast { position: absolute; top: 0; left: 0; width: 100%; background: rgba(20, 0, 0, 0.85); border-bottom: 2px solid #8a0303; color: #ff3333; padding: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 1px 1px 5px #000; z-index: 15; box-sizing: border-box;}
+        
+        /* Full Screen Canvas */
+        canvas { background-color: #050505; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; box-shadow: inset 0 0 100px #000;}
+        
+        /* The Judgment Ledger (Status Box) */
+        #status-box { position: absolute; top: 60px; right: 20px; width: 280px; background: rgba(15, 10, 10, 0.85); border: 1px solid #d4af37; z-index: 10; text-align: left; padding: 15px; box-shadow: 0 0 20px #000; display: none; }
+        #status-box h3 { margin: 0 0 10px 0; color: #d4af37; font-size: 14px; border-bottom: 1px solid #555; padding-bottom: 5px; letter-spacing: 2px; text-transform: uppercase;}
+        #log-list { list-style: none; padding: 0; margin: 0; font-size: 12px; color: #ccc; max-height: 200px; overflow-y: auto; }
+        #log-list li { margin-bottom: 8px; border-left: 2px solid #8a0303; padding-left: 8px; }
+        .log-accepted { color: #00ff00 !important; border-left-color: #00ff00 !important; }
+        .log-rejected { color: #ff3333 !important; }
+
+        .fullscreen-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
+        input[type="text"] { background: #1a1a1a; border: 1px solid #d4af37; color: #fff; padding: 12px; text-align: center; font-size: 16px; margin-bottom: 20px; width: 80%; max-width: 300px;}
+        button { background: rgba(10, 10, 10, 0.9); border: 1px solid #d4af37; color: #d4af37; padding: 12px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; margin: 5px; }
+        button:hover { background: rgba(212, 175, 55, 0.2); }
+        
+        #altar-modal { display: none; position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.95); border: 1px solid #d4af37; padding: 30px; box-shadow: 0 0 40px #000; z-index: 15; width: 85%; max-width: 400px; }
+        
+        #controls-overlay { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; gap: 40px; z-index: 10; width: 100%; max-width: 600px; }
+        #d-pad { display: grid; grid-template-columns: 55px 55px 55px; grid-template-rows: 55px 55px 55px; gap: 5px; }
+        .d-btn { background: rgba(20, 20, 20, 0.85); border: 1px solid #d4af37; color: #d4af37; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; cursor: pointer; box-shadow: 0 0 10px #000;}
+        .d-btn:active { background: rgba(212, 175, 55, 0.6); color: #fff; }
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+        
+        .combat-btn { background: rgba(20, 0, 0, 0.85); border: 2px solid #ff3333; color: #ff3333; border-radius: 50%; height: 90px; width: 90px; font-size: 16px; box-shadow: 0 0 15px rgba(255,51,51,0.3); cursor: pointer;}
+        .combat-btn:active { background: rgba(255, 51, 51, 0.6); color: #fff;}
+        
+        #alpha-dashboard { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:#050505; z-index: 30; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .alpha-console-panel { border: 1px solid #d4af37; padding: 15px; margin-bottom: 20px; background: #0a0a0a; }
+        .offering-card { border: 1px solid #8a0303; padding: 15px; margin-bottom: 20px; background: #110000; }
+        .offering-card img { max-width: 100%; max-height: 300px; margin: 10px 0; border: 1px solid #333; }
     </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-<div id="console">
-    <div id="output"></div>
-    <div class="input-line">
-        <span class="prompt">_></span>
-        <input type="text" id="cmd-input" autocomplete="off" autofocus>
+    <div id="alpha-broadcast">AWAITING ALPHA'S COMMAND...</div>
+
+    <div id="status-box">
+        <h3>THE JUDGMENT LEDGER</h3>
+        <ul id="log-list">
+            <li>System Online. Awaiting offerings.</li>
+        </ul>
     </div>
-    <input type="file" id="offering-upload" accept="image/*">
-</div>
+
+    <div id="login-screen" class="fullscreen-menu">
+        <h1 style="letter-spacing: 5px; text-transform: uppercase;">The Sovereign Wastes</h1>
+        <p style="color: #8c8c8c; font-style: italic; margin-bottom: 30px;">Enter your identifier to begin the hunt.</p>
+        <input type="text" id="player-name" placeholder="IDENTIFIER" autocomplete="off">
+        <button onclick="startGame()">Enter The Territory</button>
+    </div>
+
+    <div id="lock-screen" class="fullscreen-menu" style="display: none;">
+        <h1 style="color: #ea4335; letter-spacing: 3px;">TRANSMISSION RECEIVED</h1>
+        <p style="color: #8c8c8c;">The Alpha is currently reviewing your visual offering.</p>
+        <p style="color: #d4af37;">Do not leave this territory. Awaiting judgment...</p>
+    </div>
+
+    <div id="victory-screen" class="fullscreen-menu" style="display: none;">
+        <h1 style="color: #00ff00; letter-spacing: 3px;">OFFERING ACCEPTED</h1>
+        <p style="color: #fff; max-width: 400px; line-height: 1.6;">You have proven your discipline. The Alpha finds your offering satisfactory.</p>
+        <p style="color: #d4af37; border: 1px solid #d4af37; padding: 15px; margin-top: 20px;">INVITATION: Sovereign Suite. Awaiting further coordinates.</p>
+    </div>
+
+    <div id="rejected-screen" class="fullscreen-menu" style="display: none;">
+        <h1 style="color: #ea4335; letter-spacing: 3px;">OFFERING REJECTED</h1>
+        <p style="color: #fff; max-width: 400px; line-height: 1.6;">Your offering was deemed unworthy by the Alpha. You have been banished.</p>
+        <button onclick="acknowledgeRejection()">RETURN TO WASTES</button>
+    </div>
+
+    <div id="alpha-dashboard">
+        <h1 style="border-bottom: 1px solid #d4af37; padding-bottom: 10px;">THE ALPHA'S DEN</h1>
+        <div class="alpha-console-panel">
+            <h3 style="margin-top:0;">BROADCAST COMMAND</h3>
+            <p style="font-size: 12px; color: #8c8c8c;">Update the mandate displayed to all lone wolves.</p>
+            <input type="text" id="alpha-msg-input" placeholder="Enter new mandate..." style="width: 100%;">
+            <button onclick="updateAlphaMessage()">BROADCAST TO PACK</button>
+            <button onclick="document.getElementById('alpha-dashboard').style.display='none'">RETURN TO MAP</button>
+        </div>
+        <h3 style="margin-top: 30px;">PENDING OFFERINGS</h3>
+        <div id="offerings-list"></div>
+    </div>
+
+    <div id="altar-modal">
+        <h2 style="margin-top:0;">THE INNER SANCTUM</h2>
+        <p style="font-size: 14px; color: #8c8c8c;">You have reached the Alpha's throne. Name your offering and submit.</p>
+        <input type="text" id="offering-name" placeholder="Name of Offering (e.g. 'Morning Sweat')" style="width: 100%; margin-bottom: 10px;">
+        <input type="file" id="offering-file" accept="image/*" style="margin: 10px 0 20px 0; color:#fff; width: 100%;">
+        <button onclick="submitOffering()">Submit to the Alpha</button>
+        <button onclick="document.getElementById('altar-modal').style.display='none'">Walk Away</button>
+    </div>
+
+    <canvas id="gameCanvas" width="1000" height="800"></canvas>
+
+    <div id="controls-overlay">
+        <div id="d-pad">
+            <div class="d-btn" id="btn-up" onclick="move('up')">▲</div>
+            <div class="d-btn" id="btn-left" onclick="move('left')">◀</div>
+            <div class="d-btn" id="btn-down" onclick="move('down')">▼</div>
+            <div class="d-btn" id="btn-right" onclick="move('right')">▶</div>
+        </div>
+        <div>
+            <button class="combat-btn" onclick="attack()">BITE</button>
+        </div>
+    </div>
 
 <script>
-    // Game State Management (Referencing Foundation Game Design PDF)
-    const STATES = { LOGIN: 0, PLAYING: 1, ALPHA: 2 };
-    let currentState = STATES.LOGIN;
-    let playerName = "";
+    // 1. INITIALIZE FIREBASE (PASTE YOUR CONFIG HERE)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "your-project.firebaseapp.com",
+        databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+        projectId: "your-project"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // --- THE WHITELIST ---
+    const WHITELIST = {
+        "JERRY": true,
+        "AMANDA": true
+    };
+
+    // 2. ASSETS & 100x100 MAP
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
     
-    // 2D Array Map (3x3 Grid)
-    // [0,0] [1,0] [2,0]
-    // [0,1] [1,1] [2,1]
-    // [0,2] [1,2] [2,2]
-    const map = [
-        ["Edge of the Wastes", "Northern Dunes", "Scorched Ruins"],
-        ["Western Sands", "THE OBSIDIAN LAIR", "Eastern Ridge"],
-        ["Southern Expanse", "Sunken Valley", "Forgotten Path"]
-    ];
-    let px = 0; // Player X
-    let py = 0; // Player Y
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    const outputDiv = document.getElementById("output");
-    const inputField = document.getElementById("cmd-input");
-    const fileInput = document.getElementById("offering-upload");
+    const TILE_SIZE = 50; 
+    const COLS = 100; 
+    const ROWS = 100;
 
-    function print(text, className = "") {
-        const line = document.createElement("div");
-        line.className = "output-line " + className;
-        line.innerHTML = text;
-        outputDiv.appendChild(line);
-        window.scrollTo(0, document.body.scrollHeight);
+    const imgAlpha = new Image(); imgAlpha.src = "alpha.jpg";
+    const imgLone = new Image(); imgLone.src = "lone.jpg";
+
+    let map = [];
+    for(let r=0; r<ROWS; r++){
+        let row = [];
+        for(let c=0; c<COLS; c++){
+            if(r===0 || r===ROWS-1 || c===0 || c===COLS-1) row.push(1); 
+            else if(Math.random() < 0.08) row.push(1); 
+            else row.push(0); 
+        }
+        map.push(row);
     }
 
-    // Initial Boot Sequence
-    print("INITIALIZING SOVEREIGN PROTOCOL...", "system-msg");
-    print("ENCRYPTION: ENABLED", "system-msg");
-    print("SERVER: LIVE", "system-msg");
-    print("<br>ENTER IDENTIFIER:");
-
-    // Simulated Multiplayer Ghost Logic
-    function triggerGhostEvents() {
-        if(currentState !== STATES.PLAYING) return;
-        const events = [
-            "WOLF-04 has entered the adjacent sector.",
-            "WARNING: WOLF-02 is moving rapidly towards the center.",
-            "A distant howl echoes. Another wolf is fighting for the Alpha's attention.",
-            "WOLF-04 defeated a lesser rival. She is gaining ground."
-        ];
-        const randomEvent = events[Math.floor(Math.random() * events.length)];
-        print("<br>" + randomEvent, "alert-msg");
+    // Carve out The Alpha's Den
+    for(let r=45; r<=55; r++){
+        for(let c=45; c<=55; c++){
+            if (r===45 || r===55 || c===45 || c===55) map[r][c] = 1; 
+            else map[r][c] = 2; 
+        }
     }
-    
-    // Ghost timer runs every 15-30 seconds
-    setInterval(() => {
-        if (Math.random() > 0.5) triggerGhostEvents();
-    }, 20000);
+    map[55][50] = 2; map[55][49] = 2; map[55][51] = 2;
+    map[50][50] = 3; // Throne
 
-    // Command Parser
-    inputField.addEventListener("keydown", function(e) {
-        if (e.key === "Enter") {
-            const val = inputField.value.trim().toUpperCase();
-            inputField.value = "";
-            if (!val) return;
+    let myPlayerId = "";
+    let myName = "";
+    let isAlpha = false;
+    let players = {}; 
+    let rabbits = {};
+    const corners = [[5,5], [94,5], [5,94], [94,94]];
 
-            print(`<br><span style="color:#fff">_> ${val}</span>`);
+    function startGame() {
+        myName = document.getElementById("player-name").value.trim().toUpperCase();
+        
+        if (!WHITELIST[myName]) {
+            alert("ACCESS DENIED. Your identifier is not recognized by the Alpha's protocol.");
+            return;
+        }
 
-            if (currentState === STATES.LOGIN) {
-                handleLogin(val);
-            } else if (currentState === STATES.PLAYING) {
-                handlePlayCommand(val);
-            } else if (currentState === STATES.ALPHA) {
-                handleAlphaCommand(val);
+        if (myName === "JERRY") {
+            myName = "THE ALPHA";
+            isAlpha = true;
+            document.getElementById("alpha-dashboard").style.display = "block";
+        }
+
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("status-box").style.display = "block"; // Show Ledger
+        myPlayerId = "player_" + Math.floor(Math.random() * 100000);
+        
+        let spawn = isAlpha ? [50,50] : corners[Math.floor(Math.random() * corners.length)];
+
+        db.ref("players/" + myPlayerId).set({
+            name: myName,
+            x: spawn[0],
+            y: spawn[1],
+            isAlpha: isAlpha,
+            isBot: false,
+            status: "playing",
+            hp: 100,
+            offering: "",
+            offeringName: "",
+            biteTarget: null
+        });
+
+        db.ref("players/" + myPlayerId).onDisconnect().remove();
+
+        // If Alpha logs in, deploy the Hounds
+        if (isAlpha) {
+            deployHounds();
+            setInterval(runHoundAI, 1500); // Hounds move every 1.5 seconds
+        }
+
+        db.ref("players").on("value", (snapshot) => {
+            players = snapshot.val() || {};
+            checkMyState(); 
+            if(isAlpha) renderAlphaDashboard();
+        });
+
+        db.ref("rabbits").once("value", snap => {
+            if (!snap.exists()) {
+                let initRabbits = {};
+                for(let i=0; i<40; i++) { 
+                    initRabbits["rabbit_"+i] = { x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 };
+                }
+                db.ref("rabbits").set(initRabbits);
+            }
+        });
+
+        db.ref("rabbits").on("value", snap => { rabbits = snap.val() || {}; });
+
+        db.ref("settings/alphaMessage").on("value", (snapshot) => {
+            const msg = snapshot.val();
+            if (msg) document.getElementById("alpha-broadcast").innerText = msg;
+        });
+
+        // Listen to the Judgment Ledger
+        db.ref("logs").orderByChild("time").limitToLast(6).on("value", snap => {
+            let html = "";
+            snap.forEach(child => {
+                let log = child.val();
+                let cssClass = "";
+                if(log.status === 'accepted') cssClass = "log-accepted";
+                if(log.status === 'rejected') cssClass = "log-rejected";
+                html += `<li class="${cssClass}">${log.text}</li>`;
+            });
+            document.getElementById("log-list").innerHTML = html;
+        });
+
+        window.addEventListener("keydown", handleKeydown);
+        requestAnimationFrame(gameLoop);
+        setInterval(wanderRabbits, 2000);
+    }
+
+    // --- THE HOUNDS (AI BOTS) ---
+    function deployHounds() {
+        let spawn1 = corners[Math.floor(Math.random() * corners.length)];
+        let spawn2 = corners[Math.floor(Math.random() * corners.length)];
+        
+        db.ref("players/bot_1").set({ name: "HOUND-1", x: spawn1[0], y: spawn1[1], isAlpha: false, isBot: true, status: "playing", hp: 999 });
+        db.ref("players/bot_2").set({ name: "HOUND-2", x: spawn2[0], y: spawn2[1], isAlpha: false, isBot: true, status: "playing", hp: 999 });
+        // Bots disappear when Alpha logs off
+        db.ref("players/bot_1").onDisconnect().remove();
+        db.ref("players/bot_2").onDisconnect().remove();
+    }
+
+    function runHoundAI() {
+        const bots = ["bot_1", "bot_2"];
+        for (let b of bots) {
+            let bot = players[b];
+            if (!bot) continue;
+
+            let nearest = null;
+            let nearestId = null;
+            let minDist = Infinity;
+
+            // Find nearest lone wolf (ignore Alpha and other Bots)
+            for (let id in players) {
+                let p = players[id];
+                if (p.status === "playing" && !p.isAlpha && !p.isBot) {
+                    let d = Math.abs(p.x - bot.x) + Math.abs(p.y - bot.y);
+                    if (d < minDist) { minDist = d; nearest = p; nearestId = id; }
+                }
+            }
+
+            if (nearest) {
+                if (minDist <= 1) {
+                    // Attack
+                    let newHp = nearest.hp - 25;
+                    db.ref("players/" + nearestId).update({ hp: newHp });
+                    db.ref("players/" + b).update({ biteTarget: {x: nearest.x, y: nearest.y, time: Date.now()} });
+                } else {
+                    // Stalk (Move towards target)
+                    let nx = bot.x; let ny = bot.y;
+                    if (nearest.x > bot.x) nx++; else if (nearest.x < bot.x) nx--;
+                    else if (nearest.y > bot.y) ny++; else if (nearest.y < bot.y) ny--;
+                    
+                    if (map[ny][nx] !== 1 && map[ny][nx] !== 3) { // Don't walk through walls or step on Throne
+                        db.ref("players/" + b).update({x: nx, y: ny, biteTarget: null});
+                    }
+                }
             }
         }
-    });
+    }
 
-    function handleLogin(val) {
-        if (val === "JERRY") {
-            currentState = STATES.ALPHA;
-            print("BIOMETRICS CONFIRMED. WELCOME BACK, ARCHITECT.", "success-msg");
-            print("Type 'STATUS' to view the arena.");
-        } else {
-            playerName = val;
-            currentState = STATES.PLAYING;
-            print(`IDENTIFIER ACCEPTED: ${playerName}`, "success-msg");
-            print("You have been dropped into the Sovereign Wastes.");
-            print("The Alpha's Lair is hidden in the center of the grid. Find it.");
-            print("COMMANDS: NORTH, SOUTH, EAST, WEST, LOOK");
-            look();
+    // --- SYSTEM LOGIC ---
+    function logJudgment(text, statusStr) {
+        db.ref("logs").push({ text: text, status: statusStr, time: firebase.database.ServerValue.TIMESTAMP });
+    }
+
+    function wanderRabbits() {
+        if (!players[myPlayerId] || players[myPlayerId].status !== 'playing') return;
+        let rabbitKeys = Object.keys(rabbits);
+        if (rabbitKeys.length > 0 && Math.random() < 0.3) {
+             let rKey = rabbitKeys[Math.floor(Math.random() * rabbitKeys.length)];
+             let rb = rabbits[rKey];
+             let moveDir = Math.floor(Math.random() * 4);
+             let nx = rb.x, ny = rb.y;
+             if (moveDir===0) nx++; if (moveDir===1) nx--;
+             if (moveDir===2) ny++; if (moveDir===3) ny--;
+             if (nx>0 && nx<COLS-1 && ny>0 && ny<ROWS-1 && map[ny][nx] !== 1) {
+                 db.ref("rabbits/" + rKey).update({x: nx, y: ny});
+             }
         }
     }
 
-    function look() {
-        print(`<br>LOCATION: ${map[py][px]}`, "system-msg");
-        if (px === 1 && py === 1) {
-            print("You stand before the Obsidian Altar in the center of the Lair.", "success-msg");
-            print("Keisha is watching from the shadows. The Alpha demands your visual proof.");
-            print("Type 'OFFER' to upload your photo and claim your seat.");
-        } else {
-            print("The desert is empty here. The Lair is elsewhere.");
+    function updateAlphaMessage() {
+        const msg = document.getElementById("alpha-msg-input").value;
+        if(msg) db.ref("settings/alphaMessage").set(msg);
+    }
+
+    function checkMyState() {
+        if (isAlpha) return;
+        const myData = players[myPlayerId];
+        if (!myData) return;
+
+        if (myData.hp <= 0 && myData.status === "playing") {
+            let spawn = corners[Math.floor(Math.random() * corners.length)];
+            db.ref("players/" + myPlayerId).update({ hp: 100, x: spawn[0], y: spawn[1] });
+            alert("FATAL BITE. You have been dominated and banished to the edge of the wastes.");
+        }
+
+        if (myData.status === "review") {
+            document.getElementById("lock-screen").style.display = "flex";
+            document.getElementById("altar-modal").style.display = "none";
+        } else if (myData.status === "accepted") {
+            document.getElementById("lock-screen").style.display = "none";
+            document.getElementById("victory-screen").style.display = "flex";
+        } else if (myData.status === "rejected") {
+            document.getElementById("lock-screen").style.display = "none";
+            document.getElementById("rejected-screen").style.display = "flex";
+        } else if (myData.status === "playing") {
+            document.getElementById("lock-screen").style.display = "none";
+            document.getElementById("victory-screen").style.display = "none";
+            document.getElementById("rejected-screen").style.display = "none";
         }
     }
 
-    function handlePlayCommand(cmd) {
-        if (cmd === "LOOK") {
-            look();
-        } else if (cmd === "NORTH") {
-            if (py > 0) { py--; look(); } else { print("The wasteland blocks your path."); }
-        } else if (cmd === "SOUTH") {
-            if (py < 2) { py++; look(); } else { print("The wasteland blocks your path."); }
-        } else if (cmd === "WEST") {
-            if (px > 0) { px--; look(); } else { print("The wasteland blocks your path."); }
-        } else if (cmd === "EAST") {
-            if (px < 2) { px++; look(); } else { print("The wasteland blocks your path."); }
-        } else if (cmd === "OFFER" && px === 1 && py === 1) {
-            print("Opening secure channel for visual upload...", "system-msg");
-            fileInput.click();
-        } else {
-            print("COMMAND NOT RECOGNIZED.");
+    function acknowledgeRejection() {
+        let spawn = corners[Math.floor(Math.random() * corners.length)];
+        db.ref("players/" + myPlayerId).update({ status: "playing", x: spawn[0], y: spawn[1], hp: 100, offering: "" });
+    }
+
+    function handleKeydown(e) {
+        if (e.key === "ArrowUp" || e.key === "w") move('up');
+        if (e.key === "ArrowDown" || e.key === "s") move('down');
+        if (e.key === "ArrowLeft" || e.key === "a") move('left');
+        if (e.key === "ArrowRight" || e.key === "d") move('right');
+        if (e.key === " ") attack(); 
+    }
+
+    function move(dir) {
+        if (!players[myPlayerId] || players[myPlayerId].status !== "playing") return;
+        let newX = players[myPlayerId].x;
+        let newY = players[myPlayerId].y;
+
+        if (dir === 'up') newY--;
+        if (dir === 'down') newY++;
+        if (dir === 'left') newX--;
+        if (dir === 'right') newX++;
+
+        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS) {
+            if (map[newY][newX] !== 1) { 
+                db.ref("players/" + myPlayerId).update({ x: newX, y: newY, biteTarget: null }); 
+                
+                if (map[newY][newX] === 3 && !isAlpha) {
+                    document.getElementById("altar-modal").style.display = "block";
+                } else {
+                    document.getElementById("altar-modal").style.display = "none";
+                }
+            }
         }
     }
 
-    function handleAlphaCommand(cmd) {
-        if (cmd === "STATUS") {
-            print("<br>--- ARENA STATUS ---", "system-msg");
-            print("WOLF-01 (Amanda) : LOCATION [0,1] - Panicking, moving EAST.");
-            print("WOLF-04 (Ghost)  : LOCATION [1,2] - Moving NORTH to Altar.");
-            print("WOLF-02 (Ghost)  : DEFEATED.");
-            print("Awaiting offerings in the Lair.");
-        } else {
-            print("COMMAND NOT RECOGNIZED.");
+    function attack() {
+        if (!players[myPlayerId] || players[myPlayerId].status !== "playing" || isAlpha) return;
+        let myX = players[myPlayerId].x;
+        let myY = players[myPlayerId].y;
+        let didHit = false;
+
+        for (let id in players) {
+            if (id !== myPlayerId && players[id].status === "playing" && !players[id].isAlpha && !players[id].isBot) {
+                if (Math.abs(players[id].x - myX) <= 1 && Math.abs(players[id].y - myY) <= 1) {
+                    db.ref("players/" + id).update({ hp: players[id].hp - 35 });
+                    didHit = true;
+                    db.ref("players/" + myPlayerId).update({ biteTarget: {x: players[id].x, y: players[id].y, time: Date.now()} });
+                }
+            }
+        }
+
+        for (let rKey in rabbits) {
+            let rb = rabbits[rKey];
+            if (Math.abs(rb.x - myX) <= 1 && Math.abs(rb.y - myY) <= 1) {
+                let newHp = Math.min(100, players[myPlayerId].hp + 20);
+                db.ref("players/" + myPlayerId).update({ hp: newHp, biteTarget: {x: rb.x, y: rb.y, time: Date.now()} });
+                db.ref("rabbits/" + rKey).update({ x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 });
+                didHit = true;
+            }
+        }
+        
+        if(!didHit) db.ref("players/" + myPlayerId).update({ biteTarget: {x: myX, y: myY-1, time: Date.now()} });
+    }
+
+    function gameLoop() {
+        if (players[myPlayerId]) drawGame();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function drawGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let me = players[myPlayerId];
+        let camX = (me.x * TILE_SIZE) - (canvas.width / 2) + (TILE_SIZE / 2);
+        let camY = (me.y * TILE_SIZE) - (canvas.height / 2) + (TILE_SIZE / 2);
+        
+        camX = Math.max(0, Math.min(camX, COLS * TILE_SIZE - canvas.width));
+        camY = Math.max(0, Math.min(camY, ROWS * TILE_SIZE - canvas.height));
+
+        // Moon
+        ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(canvas.width - 80, 80, 40, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#050505"; ctx.beginPath(); ctx.arc(canvas.width - 95, 70, 35, 0, Math.PI * 2); ctx.fill();
+
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                let drawX = (col * TILE_SIZE) - camX;
+                let drawY = (row * TILE_SIZE) - camY;
+
+                if (drawX > -TILE_SIZE && drawX < canvas.width && drawY > -TILE_SIZE && drawY < canvas.height) {
+                    let tile = map[row][col];
+                    ctx.fillStyle = "#0f0f0f"; ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    ctx.strokeStyle = "#121212"; ctx.strokeRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+
+                    if (tile === 1) { 
+                        ctx.fillStyle = "#1a331a"; 
+                        ctx.fillRect(drawX + 20, drawY + 10, 10, 40); 
+                        ctx.fillRect(drawX + 10, drawY + 20, 10, 15); 
+                        ctx.fillRect(drawX + 30, drawY + 15, 10, 15); 
+                    } 
+                    else if (tile === 2) { ctx.fillStyle = "#110a0a"; ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE); } 
+                    else if (tile === 3) { ctx.fillStyle = "#4a0000"; ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE); }
+                }
+            }
+        }
+
+        // Rabbits
+        for (let rKey in rabbits) {
+            let rb = rabbits[rKey];
+            let drawX = (rb.x * TILE_SIZE) - camX;
+            let drawY = (rb.y * TILE_SIZE) - camY;
+            if (drawX > -50 && drawX < canvas.width && drawY > -50 && drawY < canvas.height) {
+                ctx.fillStyle = "#aaaaaa"; ctx.beginPath(); ctx.arc(drawX + 25, drawY + 25, 8, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        // Players & Bots
+        for (let id in players) {
+            let p = players[id];
+            if (!p || (p.status !== "playing" && p.status !== "review" && p.status !== "rejected")) continue;
+
+            let drawX = (p.x * TILE_SIZE) - camX;
+            let drawY = (p.y * TILE_SIZE) - camY;
+            
+            if (drawX > -150 && drawX < canvas.width + 150 && drawY > -150 && drawY < canvas.height + 150) {
+                let avatarSize = 100; 
+                let offset = (avatarSize - TILE_SIZE) / 2; 
+                
+                if (p.isAlpha) {
+                    if (imgAlpha.complete && imgAlpha.naturalHeight !== 0) ctx.drawImage(imgAlpha, drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    else { ctx.fillStyle = "#d4af37"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize); }
+                } else if (p.isBot) {
+                    // Bots draw slightly red to look menacing
+                    if (imgLone.complete && imgLone.naturalHeight !== 0) ctx.drawImage(imgLone, drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    else { ctx.fillStyle = "#8a0303"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize); }
+                } else {
+                    if (imgLone.complete && imgLone.naturalHeight !== 0) ctx.drawImage(imgLone, drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    else { ctx.fillStyle = "#555"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize); }
+                    
+                    ctx.fillStyle = "#333"; ctx.fillRect(drawX, drawY - 15, TILE_SIZE, 6);
+                    ctx.fillStyle = "#ff3333"; ctx.fillRect(drawX, drawY - 15, (p.hp / 100) * TILE_SIZE, 6);
+                }
+
+                ctx.fillStyle = p.isAlpha ? "#d4af37" : (p.isBot ? "#ff3333" : "#ffffff");
+                ctx.font = "16px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(p.name, drawX + (TILE_SIZE/2), drawY - 25);
+
+                if (p.biteTarget && (Date.now() - p.biteTarget.time < 300)) drawTeeth((p.biteTarget.x * TILE_SIZE) - camX, (p.biteTarget.y * TILE_SIZE) - camY);
+            }
         }
     }
 
-    // Handle File Upload Completion
-    fileInput.addEventListener("change", function() {
-        if (this.files && this.files[0]) {
-            print("<br>TRANSMITTING VISUAL DATA...", "system-msg");
-            setTimeout(() => {
-                print("OFFERING ACCEPTED. THE QUEEN IS REVIEWING YOUR SUBMISSION.", "success-msg");
-                print("Your stats have been locked. Wait for the Alpha's invitation to the Suite.");
-            }, 2000);
+    function drawTeeth(drawX, drawY) {
+        ctx.fillStyle = "#ffffff"; 
+        ctx.beginPath(); ctx.moveTo(drawX, drawY); ctx.lineTo(drawX + 10, drawY + 20); ctx.lineTo(drawX + 25, drawY); ctx.lineTo(drawX + 40, drawY + 20); ctx.lineTo(drawX + 50, drawY); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(drawX, drawY + 50); ctx.lineTo(drawX + 10, drawY + 30); ctx.lineTo(drawX + 25, drawY + 50); ctx.lineTo(drawX + 40, drawY + 30); ctx.lineTo(drawX + 50, drawY + 50); ctx.fill();
+    }
+
+    function submitOffering() {
+        const fileInput = document.getElementById("offering-file");
+        const offeringName = document.getElementById("offering-name").value.trim() || "Unnamed Offering";
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                db.ref("players/" + myPlayerId).update({ status: "review", offering: e.target.result, offeringName: offeringName });
+                logJudgment(`${myName} submitted: "${offeringName}". Awaiting Alpha.`, 'pending');
+            };
+            reader.readAsDataURL(fileInput.files[0]);
         }
-    });
+    }
+
+    function renderAlphaDashboard() {
+        const list = document.getElementById("offerings-list");
+        list.innerHTML = "";
+        let hasPending = false;
+
+        for (let id in players) {
+            let p = players[id];
+            if (p.status === "review" && p.offering !== "") {
+                hasPending = true;
+                list.innerHTML += `
+                    <div class="offering-card">
+                        <h3 style="color:#d4af37; margin-top:0;">${p.name} submitted: "${p.offeringName}"</h3>
+                        <img src="${p.offering}" />
+                        <br>
+                        <button style="color:#00ff00; border-color:#00ff00; background:rgba(0,50,0,0.5);" onclick="judgeWolf('${id}', 'accepted', '${p.name}', '${p.offeringName}')">ACCEPT</button>
+                        <button style="color:#ea4335; border-color:#ea4335; background:rgba(50,0,0,0.5);" onclick="judgeWolf('${id}', 'rejected', '${p.name}', '${p.offeringName}')">REJECT</button>
+                    </div>
+                `;
+            }
+        }
+        if (!hasPending) list.innerHTML = "<p style='color:#8c8c8c;'>No offerings currently under review.</p>";
+    }
+
+    function judgeWolf(playerId, verdict, playerName, offeringName) {
+        if (verdict === 'accepted') {
+            db.ref("players/" + playerId).update({ status: "accepted" });
+            logJudgment(`Alpha ACCEPTED "${offeringName}" from ${playerName}.`, 'accepted');
+        } else {
+            db.ref("players/" + playerId).update({ status: "rejected" });
+            logJudgment(`Alpha REJECTED "${offeringName}" from ${playerName}.`, 'rejected');
+        }
+    }
 </script>
-
 </body>
 </html>
