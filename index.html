@@ -104,7 +104,8 @@
             <h3>BROADCAST COMMAND</h3>
             <input type="text" id="alpha-msg-input" placeholder="Issue a mandate to the pack...">
             <button onclick="updateAlphaMessage()">BROADCAST</button>
-            <button onclick="document.getElementById('alpha-dashboard').style.display='none'" style="background:transparent; border-color:#555; color:#888;">RETURN TO MAP</button>
+            <button class="danger" onclick="clearLedger()" style="margin-top:20px;">WIPE LEDGER HISTORY</button>
+            <button onclick="document.getElementById('alpha-dashboard').style.display='none'" style="background:transparent; border-color:#555; color:#888; margin-top:20px;">RETURN TO MAP</button>
         </div>
         <h2 style="color:#fff; border-bottom:1px solid #333; padding-bottom:10px;">PENDING OFFERINGS</h2>
         <div id="offerings-list"></div>
@@ -126,21 +127,19 @@
 
 <script>
     // ==========================================
-    // 1. FIREBASE CONFIGURATION (PASTE YOURS HERE)
+    // 1. FIREBASE CONFIGURATION (INJECTED)
     // ==========================================
     const firebaseConfig = {
-  	apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
-  	authDomain: "sovereignhunt.firebaseapp.com",
-  	databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
-  	projectId: "sovereignhunt"
+        apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
+        authDomain: "sovereignhunt.firebaseapp.com",
+        databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
+        projectId: "sovereignhunt"
     };
-    if(firebaseConfig.apiKey === "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc") {
-        console.warn("WARNING: Firebase Config not set! Networking will fail.");
-    } else {
-        firebase.initializeApp(firebaseConfig);
-    }
+    
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Only JERRY and AMANDA allowed.
     const WHITELIST = { "JERRY": true, "AMANDA": true };
 
     // ==========================================
@@ -151,7 +150,6 @@
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
 
-    // The Alpha Image
     const imgAlpha = new Image(); imgAlpha.src = "alpha.jpg";
 
     const TILE_SIZE = 60; 
@@ -162,7 +160,6 @@
     let myPlayerId = "", myName = "", isAlpha = false;
     let cameraX = 0, cameraY = 0;
     let frameCount = 0; 
-    let particles = []; 
 
     // Landscape Generation 
     let map = [];
@@ -170,7 +167,7 @@
         let row = [];
         for(let c=0; c<COLS; c++){
             if(r===0 || r===ROWS-1 || c===0 || c===COLS-1) row.push(1); 
-            else if(Math.random() < 0.05) row.push(1); 
+            else if(Math.random() < 0.05) row.push(1); // Trees and Cacti
             else row.push(0); 
         }
         map.push(row);
@@ -186,77 +183,100 @@
     map[55][50] = 2; map[55][49] = 2; map[55][51] = 2; 
     map[50][50] = 3; 
 
-    // Sand Particles
-    for(let i=0; i<100; i++) {
-        particles.push({
-            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-            speedX: Math.random() * 2 + 1, speedY: Math.random() * 0.5 - 0.25,
-            size: Math.random() * 2 + 1
-        });
-    }
-
     // ==========================================
-    // 3. PROCEDURAL ANIMATION ENGINE (NO IMAGES NEEDED)
+    // 3. PROCEDURAL ANIMATION ENGINE (IMPROVED)
     // ==========================================
     
-    // Draws a sleek, predatory cyber-wolf that swings its legs dynamically
+    // Generates Trees and Cacti deterministically based on tile coordinates
+    function drawScenery(ctx, dx, dy, col, row) {
+        // Pseudo-random seed based on position so it stays the same every frame
+        let seed = Math.abs(Math.sin(col * 12.9898 + row * 78.233) * 43758.5453);
+        let type = seed % 1 > 0.5 ? 'cactus' : 'tree';
+        
+        ctx.save();
+        ctx.translate(dx + TILE_SIZE/2, dy + TILE_SIZE - 5); // Anchor at bottom of tile
+        
+        if (type === 'cactus') {
+            ctx.fillStyle = "#0a110a"; // Dark saguaro silhouette
+            ctx.beginPath(); ctx.roundRect(-6, -45, 12, 45, 6); ctx.fill(); // Main Trunk
+            ctx.beginPath(); ctx.roundRect(-18, -30, 12, 6, 3); ctx.fill(); // Left arm base
+            ctx.beginPath(); ctx.roundRect(-18, -40, 6, 15, 3); ctx.fill(); // Left arm up
+            ctx.beginPath(); ctx.roundRect(6, -20, 12, 6, 3); ctx.fill();   // Right arm base
+            ctx.beginPath(); ctx.roundRect(12, -35, 6, 20, 3); ctx.fill();  // Right arm up
+        } else {
+            ctx.strokeStyle = "#080605"; // Dead tree silhouette
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(0, -15); // Trunk
+            ctx.lineTo(-12, -35); // Left low branch
+            ctx.moveTo(0, -15); ctx.lineTo(8, -25); // Right split
+            ctx.lineTo(20, -35); // Right branch
+            ctx.moveTo(8, -25); ctx.lineTo(2, -45); // Top branch
+            ctx.moveTo(-5, -25); ctx.lineTo(-15, -20); // Dead twig
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
     function drawProceduralWolf(ctx, x, y, size, isMoving) {
         ctx.save();
-        ctx.translate(x + size/2, y + size/2); // Center drawing
+        ctx.translate(x + size/2, y + size/2); 
         let scale = size / 100;
         ctx.scale(scale, scale);
 
-        // Animation calculations
-        let bob = isMoving ? Math.abs(Math.sin(frameCount * 0.2)) * 4 : 0;
-        let legSwing = isMoving ? Math.sin(frameCount * 0.4) * 20 : 0;
+        let bob = isMoving ? Math.abs(Math.sin(frameCount * 0.2)) * 3 : 0;
+        let legSwing = isMoving ? Math.sin(frameCount * 0.4) * 25 : 0;
         ctx.translate(-50, -50 - bob); 
 
-        ctx.fillStyle = "#1a1a1a";
-        ctx.strokeStyle = "#444";
-        ctx.lineWidth = 2;
+        ctx.fillStyle = "#111"; // Very dark fur
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 1.5;
 
         // Back Leg Background
-        ctx.save(); ctx.translate(30, 60); ctx.rotate(-legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-10, 30); ctx.lineTo(5, 30); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.translate(30, 55); ctx.rotate(-legSwing * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, 35); ctx.lineTo(6, 35); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
 
         // Front Leg Background
-        ctx.save(); ctx.translate(70, 60); ctx.rotate(legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-5, 30); ctx.lineTo(10, 30); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.translate(70, 55); ctx.rotate(legSwing * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-4, 35); ctx.lineTo(8, 35); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
 
-        // Tail
-        ctx.save(); ctx.translate(15, 45); ctx.rotate((isMoving ? -legSwing*0.5 : 5) * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-30, 10, -20, 30); ctx.quadraticCurveTo(-10, 10, 0, 10); ctx.fill(); ctx.restore();
+        // Thicker Bushy Tail
+        ctx.save(); ctx.translate(15, 35); ctx.rotate((isMoving ? -legSwing*0.5 : 10) * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-40, 5, -25, 35); ctx.quadraticCurveTo(-5, 15, 0, 10); ctx.fill(); ctx.restore();
 
-        // Main Body (Predator Wedge Shape)
+        // Detailed Wolf Body Profile
         ctx.beginPath();
-        ctx.moveTo(15, 45); // Rump
-        ctx.quadraticCurveTo(40, 30, 75, 40); // Back
-        ctx.lineTo(85, 25); // Ear
-        ctx.lineTo(95, 35); // Snout
-        ctx.lineTo(85, 45); // Jaw
-        ctx.quadraticCurveTo(60, 65, 25, 60); // Belly
+        ctx.moveTo(10, 40); // Rump
+        ctx.bezierCurveTo(20, 20, 60, 25, 75, 28); // Arching back to shoulders
+        ctx.lineTo(85, 12); // Pointed Ear Tip
+        ctx.lineTo(92, 25); // Ear Base / Forehead
+        ctx.lineTo(108, 32); // Long Snout Tip
+        ctx.lineTo(100, 38); // Jaw / Chin
+        ctx.lineTo(85, 42); // Neck/Throat
+        ctx.bezierCurveTo(65, 65, 30, 55, 10, 40); // Deep barrel chest tapering to belly
         ctx.closePath();
         ctx.fill(); ctx.stroke();
 
         // Front Leg Foreground
-        ctx.save(); ctx.translate(70, 55); ctx.rotate(-legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-5, 35); ctx.lineTo(10, 35); ctx.closePath();
-        ctx.fillStyle = "#2a2a2a"; ctx.fill(); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.translate(70, 50); ctx.rotate(-legSwing * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-6, 40); ctx.lineTo(10, 40); ctx.closePath();
+        ctx.fillStyle = "#1a1a1a"; ctx.fill(); ctx.stroke(); ctx.restore();
 
-        // Back Leg Foreground
-        ctx.save(); ctx.translate(30, 55); ctx.rotate(legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-10, 35); ctx.lineTo(5, 35); ctx.closePath();
-        ctx.fillStyle = "#2a2a2a"; ctx.fill(); ctx.stroke(); ctx.restore();
+        // Back Leg Foreground (Thigh shape)
+        ctx.save(); ctx.translate(30, 45); ctx.rotate(legSwing * Math.PI / 180);
+        ctx.beginPath(); ctx.moveTo(-5,0); ctx.quadraticCurveTo(-15, 20, -10, 45); ctx.lineTo(5, 45); ctx.quadraticCurveTo(10, 20, 5, 0); ctx.closePath();
+        ctx.fillStyle = "#1a1a1a"; ctx.fill(); ctx.stroke(); ctx.restore();
 
-        // Glowing Red Predator Eye
+        // Fierce Glowing Eye
         ctx.fillStyle = "#ff0000";
-        ctx.shadowBlur = 10; ctx.shadowColor = "#ff0000";
-        ctx.beginPath(); ctx.arc(80, 37, 3, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 15; ctx.shadowColor = "#ff0000";
+        ctx.beginPath(); ctx.arc(88, 28, 2.5, 0, Math.PI*2); ctx.fill();
 
         ctx.restore();
     }
 
-    // Draws a crisp, geometric rabbit that physically hops
     function drawProceduralBunny(ctx, x, y, size, isMoving) {
         ctx.save();
         ctx.translate(x + size/2, y + size/2);
@@ -268,20 +288,15 @@
 
         ctx.fillStyle = "#e0e0e0";
         
-        // Ears
         ctx.save(); ctx.translate(35, 15); ctx.rotate((isMoving ? -20 : -10) * Math.PI / 180);
         ctx.beginPath(); ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
         ctx.save(); ctx.translate(28, 18); ctx.rotate((isMoving ? -30 : -20) * Math.PI / 180);
         ctx.beginPath(); ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
 
-        // Body
         ctx.beginPath(); ctx.ellipse(25, 35, 12, 9, 0, 0, Math.PI*2); ctx.fill();
-        // Head
         ctx.beginPath(); ctx.ellipse(36, 25, 7, 7, 0, 0, Math.PI*2); ctx.fill();
-        // Tail
         ctx.beginPath(); ctx.arc(12, 32, 4, 0, Math.PI*2); ctx.fill();
         
-        // Legs
         ctx.save(); ctx.translate(25, 40); ctx.rotate((isMoving ? 45 : 0) * Math.PI / 180);
         ctx.beginPath(); ctx.ellipse(0, 4, 3, 6, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
 
@@ -293,13 +308,21 @@
     // ==========================================
     const corners = [[5,5], [94,5], [5,94], [94,94]];
 
+    // Allow pressing "Enter" to log in
+    document.getElementById("player-name").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") startGame();
+    });
+
     function startGame() {
-        myName = document.getElementById("player-name").value.trim().toUpperCase();
-        if (!WHITELIST[myName]) return alert("ACCESS DENIED: Identifier not recognized.");
+        let inputName = document.getElementById("player-name").value.trim().toUpperCase();
+        if (!WHITELIST[inputName]) return alert("ACCESS DENIED: Identifier not recognized.");
         
-        if (myName === "JERRY") {
+        if (inputName === "JERRY") {
+            myName = "THE ALPHA"; // Erase "Jerry" from the system entirely.
             isAlpha = true;
             document.getElementById("alpha-dashboard").style.display = "block";
+        } else {
+            myName = inputName;
         }
         
         document.getElementById("login-screen").style.display = "none";
@@ -316,7 +339,7 @@
 
         db.ref("players").on("value", s => { players = s.val() || {}; checkMyState(); if(isAlpha) renderAlphaDashboard(); });
         db.ref("rabbits").on("value", s => rabbits = s.val() || {});
-        db.ref("logs").limitToLast(5).on("value", s => updateLog(s));
+        db.ref("logs").on("value", s => updateLog(s));
         db.ref("settings/alphaMessage").on("value", s => { if(s.val()) document.getElementById("alpha-broadcast").innerText = s.val(); });
 
         db.ref("rabbits").once("value", snap => {
@@ -338,11 +361,27 @@
     function updateLog(s) {
         let list = document.getElementById("log-list");
         list.innerHTML = "";
-        s.forEach(child => {
-            let log = child.val();
+        if (!s.exists()) {
+            list.innerHTML = "<li>Ledger is clear.</li>";
+            return;
+        }
+        
+        // Convert to array and get last 5 to prevent UI overflow, but db keeps all unless wiped
+        let allLogs = [];
+        s.forEach(child => { allLogs.push(child.val()); });
+        let recentLogs = allLogs.slice(-6); // Show last 6 on screen
+        
+        recentLogs.forEach(log => {
             list.innerHTML += `<li class="${log.status}">${log.text}</li>`;
         });
         list.scrollTop = list.scrollHeight;
+    }
+
+    function clearLedger() {
+        if(confirm("Are you sure you want to completely erase the judgment ledger?")) {
+            db.ref("logs").remove();
+            db.ref("logs").push({ text: "Ledger wiped clean by Alpha.", status: 'pending', time: Date.now() });
+        }
     }
 
     function checkMyState() {
@@ -457,130 +496,6 @@
                 if (dx > -TILE_SIZE && dx < canvas.width && dy > -TILE_SIZE && dy < canvas.height) {
                     let tile = map[row][col];
                     if (tile === 1) { 
-                        ctx.fillStyle = "#1a1310"; ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
-                        ctx.strokeStyle = "#221815"; ctx.lineWidth = 2; ctx.strokeRect(dx, dy, TILE_SIZE, TILE_SIZE);
+                        drawScenery(ctx, dx, dy, col, row); // Procedural Trees/Cacti
                     } else if (tile === 2) { 
                         ctx.fillStyle = "#110000"; ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
-                    } else if (tile === 3) { 
-                        ctx.fillStyle = "#4a0000"; ctx.shadowBlur = 20; ctx.shadowColor = "#ff0000";
-                        ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE); ctx.shadowBlur = 0;
-                    } else {
-                        ctx.strokeStyle = "rgba(255,255,255,0.02)"; ctx.strokeRect(dx, dy, TILE_SIZE, TILE_SIZE);
-                    }
-                }
-            }
-        }
-
-        // Draw Rabbits via Procedural Engine
-        for (let r in rabbits) {
-            let rb = rabbits[r];
-            let dx = (rb.x * TILE_SIZE) - cameraX;
-            let dy = (rb.y * TILE_SIZE) - cameraY;
-            if (dx > -50 && dx < canvas.width && dy > -50 && dy < canvas.height) {
-                drawProceduralBunny(ctx, dx + TILE_SIZE/4, dy + TILE_SIZE/4, TILE_SIZE/2, rb.isMoving);
-            }
-        }
-
-        // Draw Players 
-        for (let id in players) {
-            let p = players[id];
-            if (!p || (p.status !== "playing" && p.status !== "review" && p.status !== "rejected")) continue;
-
-            let dx = (p.x * TILE_SIZE) - cameraX;
-            let dy = (p.y * TILE_SIZE) - cameraY;
-            
-            if (dx > -150 && dx < canvas.width && dy > -150 && dy < canvas.height) {
-                let avatarSize = 100; 
-                let offset = (avatarSize - TILE_SIZE) / 2; 
-
-                if (p.isAlpha) {
-                    if (imgAlpha.complete && imgAlpha.naturalHeight !== 0) {
-                        ctx.save(); ctx.beginPath(); ctx.arc(dx + TILE_SIZE/2, dy + TILE_SIZE/2, avatarSize/2, 0, Math.PI*2); ctx.clip();
-                        ctx.drawImage(imgAlpha, dx - offset, dy - offset, avatarSize, avatarSize); ctx.restore();
-                        ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(dx + TILE_SIZE/2, dy + TILE_SIZE/2, avatarSize/2, 0, Math.PI*2); ctx.stroke();
-                    } else {
-                        // Failsafe Alpha Crown
-                        ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(dx + TILE_SIZE/2, dy + TILE_SIZE/2, avatarSize/2, 0, Math.PI*2); ctx.fill();
-                    }
-                } else {
-                    // DRAW WOLF VIA PROCEDURAL ENGINE
-                    drawProceduralWolf(ctx, dx - offset, dy - offset, avatarSize, p.isMoving);
-                    
-                    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(dx, dy - 15, TILE_SIZE, 6);
-                    ctx.fillStyle = "#ff3333"; ctx.fillRect(dx, dy - 15, (p.hp / 100) * TILE_SIZE, 6);
-                }
-
-                ctx.fillStyle = p.isAlpha ? "#d4af37" : "#ffffff";
-                ctx.font = "bold 14px Roboto"; ctx.textAlign = "center";
-                ctx.shadowBlur = 4; ctx.shadowColor = "#000";
-                ctx.fillText(p.name, dx + (TILE_SIZE/2), dy - 25);
-                ctx.shadowBlur = 0;
-
-                if (p.biteTime && (Date.now() - p.biteTime < 200)) {
-                    ctx.fillStyle = "rgba(255, 0, 0, 0.4)";
-                    ctx.beginPath(); ctx.arc(dx + TILE_SIZE/2, dy + TILE_SIZE/2, TILE_SIZE * 1.5, 0, Math.PI*2); ctx.fill();
-                }
-            }
-        }
-
-        ctx.fillStyle = "rgba(212, 175, 55, 0.3)";
-        for(let pt of particles) {
-            pt.x += pt.speedX; pt.y += pt.speedY;
-            if(pt.x > canvas.width) { pt.x = -10; pt.y = Math.random() * canvas.height; }
-            ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI*2); ctx.fill();
-        }
-
-        requestAnimationFrame(gameLoop);
-    }
-
-    // ==========================================
-    // 7. OFFERINGS & DASHBOARD
-    // ==========================================
-    function submitOffering() {
-        const fileInput = document.getElementById("offering-file");
-        const offeringName = document.getElementById("offering-name").value.trim() || "Unnamed Offering";
-        if (fileInput.files && fileInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                db.ref("players/" + myPlayerId).update({ status: "review", offering: e.target.result, offeringName: offeringName });
-                db.ref("logs").push({ text: `${myName} submitted: "${offeringName}".`, status: 'pending', time: Date.now() });
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        }
-    }
-
-    function updateAlphaMessage() {
-        const msg = document.getElementById("alpha-msg-input").value;
-        if(msg) db.ref("settings/alphaMessage").set(msg);
-    }
-
-    function renderAlphaDashboard() {
-        const list = document.getElementById("offerings-list");
-        list.innerHTML = "";
-        let hasPending = false;
-
-        for (let id in players) {
-            let p = players[id];
-            if (p.status === "review" && p.offering !== "") {
-                hasPending = true;
-                list.innerHTML += `
-                    <div class="offering-card">
-                        <h3 style="color:#d4af37; margin-top:0;">${p.name} submitted: "${p.offeringName}"</h3>
-                        <img src="${p.offering}" />
-                        <br>
-                        <button style="border-color:#00ff00; color:#00ff00; width:48%;" onclick="judgeWolf('${id}', 'accepted', '${p.name}', '${p.offeringName}')">ACCEPT</button>
-                        <button style="border-color:#ff3333; color:#ff3333; width:48%;" onclick="judgeWolf('${id}', 'rejected', '${p.name}', '${p.offeringName}')">REJECT</button>
-                    </div>
-                `;
-            }
-        }
-        if (!hasPending) list.innerHTML = "<p style='color:#666;'>No offerings currently under review. The pack is hunting.</p>";
-    }
-
-    function judgeWolf(playerId, verdict, playerName, offeringName) {
-        db.ref("players/" + playerId).update({ status: verdict });
-        db.ref("logs").push({ text: `Alpha ${verdict.toUpperCase()} "${offeringName}" from ${playerName}.`, status: `log-${verdict}`, time: Date.now() });
-    }
-</script>
-</body>
-</html>
