@@ -304,55 +304,65 @@
     }
 
     // ==========================================
-    // 4. GAME INITIALIZATION
+    // 4. GAME INITIALIZATION (REPAIRED)
     // ==========================================
     const corners = [[5,5], [94,5], [5,94], [94,94]];
 
-    // Allow pressing "Enter" to log in
-    document.getElementById("player-name").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") startGame();
-    });
-
     function startGame() {
         let inputName = document.getElementById("player-name").value.trim().toUpperCase();
-        if (!WHITELIST[inputName]) return alert("ACCESS DENIED: Identifier not recognized.");
+        console.log("Attempting login for: " + inputName); // Debugging
+
+        if (!WHITELIST[inputName]) {
+            return alert("ACCESS DENIED: Identifier '"+inputName+"' not recognized.");
+        }
         
+        // Setup Login
         if (inputName === "JERRY") {
-            myName = "THE ALPHA"; // Erase "Jerry" from the system entirely.
             isAlpha = true;
             document.getElementById("alpha-dashboard").style.display = "block";
+            myName = "THE ALPHA";
         } else {
             myName = inputName;
         }
         
         document.getElementById("login-screen").style.display = "none";
-        document.getElementById("alpha-broadcast").innerText = "THE HUNT IS LIVE.";
-        
-        myPlayerId = "player_" + Math.floor(Math.random() * 100000);
-        let spawn = isAlpha ? [50,50] : corners[Math.floor(Math.random() * corners.length)];
+        document.getElementById("alpha-broadcast").innerText = "CONNECTING TO WASTES...";
 
-        db.ref("players/" + myPlayerId).set({
-            name: myName, x: spawn[0], y: spawn[1], isAlpha: isAlpha, hp: 100, status: "playing", biteTime: 0, isMoving: false
-        });
+        // Attempt Firebase Connection with Error Catching
+        try {
+            myPlayerId = "player_" + Math.floor(Math.random() * 100000);
+            let spawn = isAlpha ? [50,50] : corners[Math.floor(Math.random() * corners.length)];
 
-        db.ref("players/" + myPlayerId).onDisconnect().remove();
+            db.ref("players/" + myPlayerId).set({
+                name: myName, 
+                x: spawn[0], 
+                y: spawn[1], 
+                isAlpha: isAlpha, 
+                hp: 100, 
+                status: "playing", 
+                biteTime: 0, 
+                isMoving: false
+            }).then(() => {
+                console.log("Database connection successful.");
+                document.getElementById("alpha-broadcast").innerText = "THE HUNT IS LIVE.";
+                
+                // Initialize Listeners ONLY after successful write
+                db.ref("players").on("value", s => { players = s.val() || {}; checkMyState(); if(isAlpha) renderAlphaDashboard(); });
+                db.ref("rabbits").on("value", s => rabbits = s.val() || {});
+                db.ref("logs").on("value", s => updateLog(s));
+                db.ref("settings/alphaMessage").on("value", s => { if(s.val()) document.getElementById("alpha-broadcast").innerText = s.val(); });
 
-        db.ref("players").on("value", s => { players = s.val() || {}; checkMyState(); if(isAlpha) renderAlphaDashboard(); });
-        db.ref("rabbits").on("value", s => rabbits = s.val() || {});
-        db.ref("logs").on("value", s => updateLog(s));
-        db.ref("settings/alphaMessage").on("value", s => { if(s.val()) document.getElementById("alpha-broadcast").innerText = s.val(); });
+                // Start Loop
+                requestAnimationFrame(gameLoop); 
+                setInterval(wanderRabbits, 2500);
+            }).catch((error) => {
+                console.error("Firebase write error: ", error);
+                alert("DATABASE ERROR: " + error.message);
+            });
 
-        db.ref("rabbits").once("value", snap => {
-            if (!snap.exists()) {
-                let initRabbits = {};
-                for(let i=0; i<30; i++) initRabbits["rabbit_"+i] = { x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5, isMoving: false };
-                db.ref("rabbits").set(initRabbits);
-            }
-        });
-
-        window.addEventListener("keydown", handleKeydown);
-        requestAnimationFrame(gameLoop); 
-        setInterval(wanderRabbits, 2500);
+        } catch (e) {
+            alert("Initialization Error: " + e.message);
+        }
     }
 
     // ==========================================
