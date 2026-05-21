@@ -3,509 +3,577 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sovereign Protocol | The Hunt</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Roboto:wght@300;400&display=swap');
-        
-        body { background-color: #030303; color: #d4af37; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; overflow: hidden; touch-action: none; user-select: none; }
-        h1, h2, h3 { font-family: 'Cinzel', serif; letter-spacing: 2px; text-transform: uppercase; margin-top: 0; }
-        
-        #alpha-broadcast { position: absolute; top: 0; left: 0; width: 100%; background: linear-gradient(180deg, rgba(20, 0, 0, 0.95) 0%, rgba(0,0,0,0) 100%); border-bottom: 1px solid rgba(138, 3, 3, 0.5); color: #ff3333; padding: 15px 10px; font-size: 15px; font-weight: bold; letter-spacing: 3px; text-align: center; text-shadow: 0 0 10px #ff0000; z-index: 15; pointer-events: none;}
-        
-        canvas { background-color: #050505; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-        
-        .fullscreen-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(8px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
-        .menu-box { background: rgba(15, 15, 15, 0.9); border: 1px solid #d4af37; padding: 40px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.1); text-align: center; max-width: 400px; width: 90%; border-radius: 4px;}
-        
-        input[type="text"], input[type="file"] { background: rgba(0,0,0,0.5); border: 1px solid #555; color: #fff; padding: 12px; text-align: center; font-size: 16px; margin-bottom: 20px; width: 100%; box-sizing: border-box; transition: all 0.3s; font-family: 'Roboto', sans-serif;}
-        input[type="text"]:focus { border-color: #d4af37; outline: none; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
-        
-        button { background: rgba(20, 20, 20, 0.9); border: 1px solid #d4af37; color: #d4af37; padding: 15px 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; font-family: 'Cinzel', serif; transition: all 0.3s; width: 100%; margin-bottom: 10px; border-radius: 2px;}
-        button:hover { background: #d4af37; color: #000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
-        button.danger { border-color: #ff3333; color: #ff3333; }
-        button.danger:hover { background: #ff3333; color: #000; box-shadow: 0 0 15px rgba(255, 51, 51, 0.4); }
-        
-        #status-box { position: absolute; top: 70px; right: 20px; width: 280px; background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(5px); border: 1px solid #333; border-top: 2px solid #d4af37; z-index: 10; text-align: left; padding: 15px; border-radius: 4px; pointer-events: none;}
-        #log-list { list-style: none; padding: 0; margin: 0; font-size: 12px; color: #aaa; max-height: 200px; overflow-y: hidden; }
-        #log-list li { margin-bottom: 8px; border-left: 2px solid #555; padding-left: 8px; animation: fadeIn 0.5s ease-in; }
-        .log-accepted { color: #00ff00 !important; border-left-color: #00ff00 !important; text-shadow: 0 0 5px rgba(0,255,0,0.3);}
-        .log-rejected { color: #ff3333 !important; border-left-color: #ff3333 !important; text-shadow: 0 0 5px rgba(255,0,0,0.3);}
-
-        #controls-overlay { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 40px; z-index: 10; width: 100%; max-width: 500px; justify-content: center;}
-        .d-btn { background: rgba(20, 20, 20, 0.7); border: 1px solid #555; color: #d4af37; border-radius: 50%; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; backdrop-filter: blur(4px); transition: all 0.1s;}
-        .d-btn:active { background: #d4af37; color: #000; transform: scale(0.95); }
-        .combat-btn { background: rgba(40, 0, 0, 0.7); border: 2px solid #ff3333; color: #ff3333; border-radius: 50%; height: 90px; width: 90px; font-family: 'Cinzel', serif; font-size: 18px; box-shadow: 0 0 20px rgba(255,0,0,0.2); backdrop-filter: blur(4px);}
-        .combat-btn:active { background: #ff3333; color: #000; transform: scale(0.95); }
-        
-        #alpha-dashboard { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:#050505; z-index: 30; overflow-y: auto; padding: 40px; box-sizing: border-box; }
-        .offering-card { border: 1px solid #333; border-top: 2px solid #8a0303; padding: 20px; margin-bottom: 20px; background: rgba(15,15,15,0.9); border-radius: 4px;}
-        .offering-card img { max-width: 100%; max-height: 400px; margin: 15px 0; border: 1px solid #000; border-radius: 2px;}
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
-    </style>
+    <title>The Sovereign's Hunt</title>
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --obsidian: #0B0C10;
+            --charcoal: #1F2833;
+            --blood-red: #8A0303;
+            --sovereign-gold: #D4AF37;
+            --flesh: #EAEAEA;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--obsidian);
+            color: var(--flesh);
+            overflow: hidden; /* Prevents bounce scroll on iPhone */
+            touch-action: none; 
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw;
+            background: radial-gradient(circle at center, #1a0000, var(--obsidian));
+            position: absolute; z-index: 1000;
+        }
+
+        #login-screen h1 {
+            font-size: 2.5rem; color: var(--blood-red);
+            text-shadow: 2px 2px 10px rgba(138, 3, 3, 0.8);
+            text-align: center; margin-bottom: 5px;
+        }
+
+        #login-screen p { color: var(--sovereign-gold); font-style: italic; margin-bottom: 30px; text-align: center; padding: 0 20px;}
+
+        input[type="text"] {
+            padding: 15px; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px;
+            border: 1px solid var(--blood-red); border-radius: 8px;
+            background: #000; color: white; text-align: center;
+        }
+
+        button {
+            padding: 15px 30px; font-size: 1.2rem; margin-top: 10px;
+            background-color: var(--blood-red); color: white;
+            border: none; border-radius: 8px; font-weight: bold;
+            box-shadow: 0px 4px 15px rgba(138, 3, 3, 0.5);
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+
+        /* --- Game World & Camera --- */
+        #game-viewport {
+            position: relative; width: 100vw; height: 100vh; overflow: hidden; display: none;
+        }
+
+        #world-map {
+            position: absolute; width: 2000px; height: 2000px;
+            background: radial-gradient(circle, var(--charcoal) 0%, #050505 100%);
+            transition: transform 0.1s linear; /* Smooth camera panning */
+            transform-origin: top left;
+        }
+
+        /* Map Decor */
+        .moon { position: absolute; top: 1000px; left: 1000px; font-size: 8rem; filter: drop-shadow(0 0 30px #FFFFAA); opacity: 0.8; transform: translate(-50%, -50%); }
+        .decor { position: absolute; font-size: 2rem; opacity: 0.4; pointer-events: none; }
+
+        /* --- Entities --- */
+        .entity {
+            position: absolute; user-select: none;
+            transform: translate(-50%, -50%);
+            display: flex; flex-direction: column; align-items: center;
+            transition: left 0.1s linear, top 0.1s linear;
+        }
+
+        .avatar { font-size: 3.5rem; position: relative; }
+        .alpha-avatar { font-size: 5rem; filter: drop-shadow(0px 0px 15px var(--sovereign-gold)); }
+        
+        .name-tag { font-size: 0.8rem; font-weight: bold; color: #ccc; margin-top: -5px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+        .hp-bar { font-size: 0.9rem; background: var(--blood-red); color: white; border-radius: 3px; padding: 2px 8px; margin-top: 2px; font-weight: bold; border: 1px solid black; }
+
+        /* --- Dynamic Teeth Biting Animation --- */
+        @keyframes bite-anim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+        .biting::after {
+            content: "🦷"; position: absolute; left: 0; top: 0; font-size: 4rem;
+            animation: bite-anim 0.3s ease-in-out; text-shadow: 0 0 10px red;
+        }
+
+        /* --- Mobile Controls --- */
+        #ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+        
+        #dynamic-text { position: absolute; top: 10%; width: 100%; text-align: center; font-size: 2rem; color: var(--sovereign-gold); text-shadow: 2px 2px 8px #000; font-weight: bold; pointer-events: none; padding: 0 20px; box-sizing: border-box; }
+
+        /* D-Pad */
+        #d-pad { position: absolute; bottom: 30px; left: 20px; width: 150px; height: 150px; pointer-events: auto; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 5px; }
+        .dir-btn { background: rgba(138, 3, 3, 0.4); border: 1px solid var(--blood-red); border-radius: 10px; color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
+        .dir-btn:active { background: rgba(138, 3, 3, 0.8); }
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+
+        /* Action Button */
+        #action-btn { position: absolute; bottom: 50px; right: 20px; width: 100px; height: 100px; background: radial-gradient(circle, var(--blood-red), #4a0000); border: 2px solid #000; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 20px rgba(138,3,3,0.8); }
+        #action-btn:active { transform: scale(0.9); }
+
+        /* --- Alpha Dashboard --- */
+        #alpha-menu { position: absolute; top: 10px; right: 10px; pointer-events: auto; background: rgba(0,0,0,0.8); border: 1px solid var(--sovereign-gold); border-radius: 8px; padding: 10px; max-width: 60%; max-height: 80vh; overflow-y: auto; display: none; }
+        #alpha-menu h3 { color: var(--sovereign-gold); margin: 0 0 10px 0; font-size: 1.2rem; }
+        .alpha-input { width: 90%; padding: 8px; margin-bottom: 5px; background: #222; color: white; border: 1px solid #555; }
+        .alpha-btn { width: 100%; padding: 8px; font-size: 0.9rem; background: #333; color: var(--sovereign-gold); border: 1px solid var(--sovereign-gold); margin-bottom: 10px; }
+        
+        .submission-card { background: #111; border: 1px solid var(--blood-red); padding: 10px; margin-bottom: 10px; border-radius: 5px; text-align: center; }
+        .submission-img { max-width: 100%; max-height: 200px; border-radius: 5px; margin-bottom: 10px; }
+
+        /* --- Submission Modal --- */
+        #submission-modal { display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.95); z-index: 500; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; padding: 20px; box-sizing: border-box; text-align: center; }
+        #submission-modal h2 { color: var(--blood-red); font-size: 2rem; margin-bottom: 10px;}
+        #submission-modal p { color: #aaa; font-size: 1.1rem; margin-bottom: 20px; line-height: 1.4; }
+        .custom-file-upload { display: inline-block; padding: 15px 30px; cursor: pointer; background: #222; border: 2px dashed var(--sovereign-gold); color: var(--sovereign-gold); border-radius: 8px; font-size: 1.2rem; margin-bottom: 20px; width: 80%; }
+        input[type="file"] { display: none; }
+        
+        /* Canvas for silent compression */
+        #compressor { display: none; }
+    </style>
 </head>
 <body>
 
-    <div id="alpha-broadcast">AWAITING SYSTEM BOOT...</div>
+    <canvas id="compressor"></canvas>
 
-    <div id="status-box">
-        <h3>JUDGMENT LEDGER</h3>
-        <ul id="log-list"><li>Environment Live.</li></ul>
+    <div id="login-screen">
+        <h1>The Sovereign's Hunt</h1>
+        <p>Present yourself. Only approved subjects may enter.</p>
+        <input type="text" id="login-input" placeholder="Enter your moniker...">
+        <button onclick="login()">Submit to the Hunt</button>
+        <p id="login-error" style="color:#ff4444; display:none; font-weight:bold; margin-top:15px;"></p>
     </div>
 
-    <div id="login-screen" class="fullscreen-menu">
-        <div class="menu-box">
-            <h1>SOVEREIGN WASTES</h1>
-            <p style="color:#888; font-size: 14px; margin-bottom:30px;">Enter your identifier to access the proving grounds.</p>
-            <input type="text" id="player-name" placeholder="IDENTIFIER" autocomplete="off">
-            <button onclick="startGame()">ENTER TERRITORY</button>
+    <div id="game-viewport">
+        <div id="world-map">
+            <div class="moon">🌕</div>
+            </div>
+
+        <div id="ui-overlay">
+            <div id="dynamic-text"></div>
+            
+            <div id="d-pad">
+                <div class="dir-btn" id="btn-up" ontouchstart="moveDir('up', true)" ontouchend="moveDir('up', false)">▲</div>
+                <div class="dir-btn" id="btn-left" ontouchstart="moveDir('left', true)" ontouchend="moveDir('left', false)">◀</div>
+                <div class="dir-btn" id="btn-right" ontouchstart="moveDir('right', true)" ontouchend="moveDir('right', false)">▶</div>
+                <div class="dir-btn" id="btn-down" ontouchstart="moveDir('down', true)" ontouchend="moveDir('down', false)">▼</div>
+            </div>
+
+            <div id="action-btn" ontouchstart="actionButton()">BITE</div>
+        </div>
+
+        <div id="alpha-menu">
+            <h3>👑 Sovereign Control</h3>
+            <input type="text" id="new-user-input" class="alpha-input" placeholder="New Wolf Name...">
+            <button class="alpha-btn" onclick="authorizeUser()">Authorize Wolf</button>
+            <hr style="border-color:#333;">
+            <input type="text" id="alpha-msg" class="alpha-input" placeholder="Speak to the pack...">
+            <button class="alpha-btn" onclick="sendAlphaText()">Broadcast</button>
+            <button class="alpha-btn" onclick="clearAlphaText()" style="background:#222; border-color:#555; color:#aaa;">Silence Pack</button>
+            <hr style="border-color:#333;">
+            <h4 style="margin:5px 0;">Offerings (Progress)</h4>
+            <div id="submission-list"></div>
         </div>
     </div>
 
-    <div id="altar-modal" class="fullscreen-menu" style="display:none;">
-        <div class="menu-box">
-            <h2 style="color:#d4af37;">THE INNER SANCTUM</h2>
-            <p style="color:#888; font-size: 14px;">The Alpha is watching. Name your offering and submit visual proof.</p>
-            <input type="text" id="offering-name" placeholder="Name of Offering (e.g. Morning Sweat)" autocomplete="off">
-            <input type="file" id="offering-file" accept="image/*">
-            <button onclick="submitOffering()">SUBMIT TO ALPHA</button>
-            <button onclick="document.getElementById('altar-modal').style.display='none'" style="background:transparent; border-color:#555; color:#888;">WALK AWAY</button>
-        </div>
+    <div id="submission-modal">
+        <h2>Submit to the Alpha</h2>
+        <p>You have fallen, or you have reached the Den.<br><br>You must submit a photo showcasing your physical progress for the Alpha's gaze. Only then may you be granted strength.</p>
+        
+        <label class="custom-file-upload">
+            <input type="file" id="photo-upload" accept="image/*" onchange="handleFileSelect(event)">
+            📸 Select Photo Offering
+        </label>
+        <p id="file-name-display" style="color: var(--sovereign-gold); font-weight:bold; font-size:0.9rem;"></p>
+        
+        <button id="final-submit-btn" onclick="uploadAndSubmit()" style="background:var(--sovereign-gold); color:black; display:none; width:80%;">Offer to Sovereign</button>
     </div>
 
-    <div id="lock-screen" class="fullscreen-menu" style="display:none;">
-        <div class="menu-box" style="border-color:#ff9900;">
-            <h2 style="color:#ff9900;">TRANSMISSION RECEIVED</h2>
-            <p>The Alpha is currently reviewing your offering. Do not leave the territory.</p>
-        </div>
-    </div>
-    
-    <div id="victory-screen" class="fullscreen-menu" style="display:none;">
-        <div class="menu-box" style="border-color:#00ff00;">
-            <h2 style="color:#00ff00;">OFFERING ACCEPTED</h2>
-            <p>You have proven your discipline. Await coordinates for the Sovereign Suite.</p>
-        </div>
-    </div>
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
+            authDomain: "sovereignhunt.firebaseapp.com",
+            databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
+            projectId: "sovereignhunt",
+            storageBucket: "sovereignhunt.firebasestorage.app",
+            messagingSenderId: "657296200169",
+            appId: "1:657296200169:web:22a0f9364344e682083b78"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    <div id="rejected-screen" class="fullscreen-menu" style="display:none;">
-        <div class="menu-box" style="border-color:#ff3333;">
-            <h2 style="color:#ff3333;">OFFERING REJECTED</h2>
-            <p>Your offering was unworthy. You have been banished.</p>
-            <button class="danger" onclick="acknowledgeRejection()">RETURN TO WASTES</button>
-        </div>
-    </div>
+        // Game State
+        let role = "";
+        let myName = "";
+        let myId = "";
+        let myPos = { x: 1000, y: 1000 }; // Center of 2000x2000 map
+        let myHp = 50;
+        let isDead = false;
+        const MAP_SIZE = 2000;
+        const DEN_POS = { x: 1000, y: 500 }; 
+        const HIT_RADIUS = 80;
 
-    <div id="alpha-dashboard">
-        <h1 style="color:#d4af37;">THE ALPHA'S DEN</h1>
-        <div class="menu-box" style="margin: 0 0 30px 0; text-align:left; max-width: 600px;">
-            <h3>BROADCAST COMMAND</h3>
-            <input type="text" id="alpha-msg-input" placeholder="Issue a mandate to the pack...">
-            <button onclick="updateAlphaMessage()">BROADCAST</button>
-            <button class="danger" onclick="clearLedger()" style="margin-top:20px;">WIPE LEDGER HISTORY</button>
-            <button onclick="document.getElementById('alpha-dashboard').style.display='none'" style="background:transparent; border-color:#555; color:#888; margin-top:20px;">RETURN TO MAP</button>
-        </div>
-        <h2 style="color:#fff; border-bottom:1px solid #333; padding-bottom:10px;">PENDING OFFERINGS</h2>
-        <div id="offerings-list"></div>
-    </div>
+        let rabbits = [];
+        let moveState = { up: false, down: false, left: false, right: false };
+        let compressedImageBase64 = null;
 
-    <canvas id="gameCanvas"></canvas>
+        // Ensure "The Alpha" and "Amanda" exist on first load if DB is empty
+        db.ref('allowed_users').once('value', snap => {
+            if(!snap.exists()) {
+                db.ref('allowed_users/the alpha').set(true);
+                db.ref('allowed_users/amanda').set(true);
+            }
+        });
 
-    <div id="controls-overlay">
-        <div style="display:grid; grid-template-columns: repeat(3, 60px); gap: 8px;">
-            <div class="d-btn" onclick="move('up')">▲</div>
-            <div style="visibility:hidden"></div>
-            <div class="d-btn" onclick="move('up')">▲</div>
-            <div class="d-btn" onclick="move('left')">◀</div>
-            <div class="d-btn" onclick="move('down')">▼</div>
-            <div class="d-btn" onclick="move('right')">▶</div>
-        </div>
-        <button class="combat-btn" onclick="attack()">BITE</button>
-    </div>
+        // --- Authentication ---
+        function login() {
+            const rawInput = document.getElementById("login-input").value.trim();
+            const inputLower = rawInput.toLowerCase();
+            const errorText = document.getElementById("login-error");
 
-<script>
-    // ==========================================
-    // 1. FIREBASE CONFIGURATION (INJECTED)
-    // ==========================================
-    const firebaseConfig = {
-        apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
-        authDomain: "sovereignhunt.firebaseapp.com",
-        databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
-        projectId: "sovereignhunt"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+            if(inputLower === "") return;
 
-    // Only JERRY and AMANDA allowed.
-    const WHITELIST = { "JERRY": true, "AMANDA": true };
-
-    // ==========================================
-    // 2. ASSETS & CANVAS SETUP
-    // ==========================================
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
-
-    const imgAlpha = new Image(); imgAlpha.src = "alpha.jpg";
-
-    const TILE_SIZE = 60; 
-    const COLS = 100; 
-    const ROWS = 100;
-    
-    let players = {}, rabbits = {};
-    let myPlayerId = "", myName = "", isAlpha = false;
-    let cameraX = 0, cameraY = 0;
-    let frameCount = 0; 
-
-    // Landscape Generation 
-    let map = [];
-    for(let r=0; r<ROWS; r++){
-        let row = [];
-        for(let c=0; c<COLS; c++){
-            if(r===0 || r===ROWS-1 || c===0 || c===COLS-1) row.push(1); 
-            else if(Math.random() < 0.05) row.push(1); // Trees and Cacti
-            else row.push(0); 
+            // Check Allowed Users
+            db.ref('allowed_users/' + inputLower).once('value', snap => {
+                if(snap.exists()) {
+                    myName = rawInput;
+                    if(inputLower === "the alpha") {
+                        role = "alpha";
+                        myId = "alpha_main";
+                    } else {
+                        role = "wolf";
+                        myId = "wolf_" + inputLower.replace(/\s+/g, '');
+                    }
+                    startGame();
+                } else {
+                    errorText.innerText = "Unrecognized moniker. The Alpha has not authorized you.";
+                    errorText.style.display = "block";
+                }
+            });
         }
-        map.push(row);
-    }
-    
-    // Den Generation
-    for(let r=45; r<=55; r++){
-        for(let c=45; c<=55; c++){
-            if (r===45 || r===55 || c===45 || c===55) map[r][c] = 1; 
-            else map[r][c] = 2; 
+
+        // --- Game Initialization ---
+        function startGame() {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("game-viewport").style.display = "block";
+            initDecor();
+
+            if (role === "alpha") {
+                document.getElementById("alpha-menu").style.display = "block";
+                document.getElementById("action-btn").innerText = "BLESS";
+                document.getElementById("action-btn").style.background = "radial-gradient(circle, #D4AF37, #8B6508)";
+                document.getElementById("action-btn").style.color = "black";
+                myPos = { x: DEN_POS.x, y: DEN_POS.y }; 
+                db.ref('alphaLoc').set(myPos); 
+            } else {
+                myPos = { x: 1000, y: 1500 }; // Wolves spawn bottom half
+                db.ref('wolves/' + myId).set({ name: myName, hp: 50, x: myPos.x, y: myPos.y });
+                spawnRabbits();
+            }
+
+            requestAnimationFrame(gameLoop);
+            listenToDatabase();
         }
-    }
-    map[55][50] = 2; map[55][49] = 2; map[55][51] = 2; 
-    map[50][50] = 3; 
 
-    // ==========================================
-    // 3. PROCEDURAL ANIMATION ENGINE (IMPROVED)
-    // ==========================================
-    
-    // Generates Trees and Cacti deterministically based on tile coordinates
-    function drawScenery(ctx, dx, dy, col, row) {
-        // Pseudo-random seed based on position so it stays the same every frame
-        let seed = Math.abs(Math.sin(col * 12.9898 + row * 78.233) * 43758.5453);
-        let type = seed % 1 > 0.5 ? 'cactus' : 'tree';
-        
-        ctx.save();
-        ctx.translate(dx + TILE_SIZE/2, dy + TILE_SIZE - 5); // Anchor at bottom of tile
-        
-        if (type === 'cactus') {
-            ctx.fillStyle = "#0a110a"; // Dark saguaro silhouette
-            ctx.beginPath(); ctx.roundRect(-6, -45, 12, 45, 6); ctx.fill(); // Main Trunk
-            ctx.beginPath(); ctx.roundRect(-18, -30, 12, 6, 3); ctx.fill(); // Left arm base
-            ctx.beginPath(); ctx.roundRect(-18, -40, 6, 15, 3); ctx.fill(); // Left arm up
-            ctx.beginPath(); ctx.roundRect(6, -20, 12, 6, 3); ctx.fill();   // Right arm base
-            ctx.beginPath(); ctx.roundRect(12, -35, 6, 20, 3); ctx.fill();  // Right arm up
-        } else {
-            ctx.strokeStyle = "#080605"; // Dead tree silhouette
-            ctx.lineWidth = 4;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(0, -15); // Trunk
-            ctx.lineTo(-12, -35); // Left low branch
-            ctx.moveTo(0, -15); ctx.lineTo(8, -25); // Right split
-            ctx.lineTo(20, -35); // Right branch
-            ctx.moveTo(8, -25); ctx.lineTo(2, -45); // Top branch
-            ctx.moveTo(-5, -25); ctx.lineTo(-15, -20); // Dead twig
-            ctx.stroke();
+        function initDecor() {
+            const map = document.getElementById("world-map");
+            
+            // The Den
+            let den = document.createElement("div");
+            den.className = "entity";
+            den.style.left = DEN_POS.x + "px";
+            den.style.top = DEN_POS.y + "px";
+            den.innerHTML = `<div style="font-size:5rem;">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:1.5rem; text-shadow: 2px 2px 5px black;">The Den</div>`;
+            map.appendChild(den);
+
+            // Cacti / Bushes
+            const flora = ["🌵", "🌿", "🦂", "🦴"];
+            for(let i=0; i<60; i++) {
+                let f = document.createElement("div");
+                f.className = "decor";
+                f.style.left = Math.random() * MAP_SIZE + "px";
+                f.style.top = Math.random() * MAP_SIZE + "px";
+                f.innerText = flora[Math.floor(Math.random() * flora.length)];
+                map.appendChild(f);
+            }
         }
-        ctx.restore();
-    }
 
-    function drawProceduralWolf(ctx, x, y, size, isMoving) {
-        ctx.save();
-        ctx.translate(x + size/2, y + size/2); 
-        let scale = size / 100;
-        ctx.scale(scale, scale);
-
-        let bob = isMoving ? Math.abs(Math.sin(frameCount * 0.2)) * 3 : 0;
-        let legSwing = isMoving ? Math.sin(frameCount * 0.4) * 25 : 0;
-        ctx.translate(-50, -50 - bob); 
-
-        ctx.fillStyle = "#111"; // Very dark fur
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 1.5;
-
-        // Back Leg Background
-        ctx.save(); ctx.translate(30, 55); ctx.rotate(-legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8, 35); ctx.lineTo(6, 35); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
-
-        // Front Leg Background
-        ctx.save(); ctx.translate(70, 55); ctx.rotate(legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-4, 35); ctx.lineTo(8, 35); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
-
-        // Thicker Bushy Tail
-        ctx.save(); ctx.translate(15, 35); ctx.rotate((isMoving ? -legSwing*0.5 : 10) * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-40, 5, -25, 35); ctx.quadraticCurveTo(-5, 15, 0, 10); ctx.fill(); ctx.restore();
-
-        // Detailed Wolf Body Profile
-        ctx.beginPath();
-        ctx.moveTo(10, 40); // Rump
-        ctx.bezierCurveTo(20, 20, 60, 25, 75, 28); // Arching back to shoulders
-        ctx.lineTo(85, 12); // Pointed Ear Tip
-        ctx.lineTo(92, 25); // Ear Base / Forehead
-        ctx.lineTo(108, 32); // Long Snout Tip
-        ctx.lineTo(100, 38); // Jaw / Chin
-        ctx.lineTo(85, 42); // Neck/Throat
-        ctx.bezierCurveTo(65, 65, 30, 55, 10, 40); // Deep barrel chest tapering to belly
-        ctx.closePath();
-        ctx.fill(); ctx.stroke();
-
-        // Front Leg Foreground
-        ctx.save(); ctx.translate(70, 50); ctx.rotate(-legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-6, 40); ctx.lineTo(10, 40); ctx.closePath();
-        ctx.fillStyle = "#1a1a1a"; ctx.fill(); ctx.stroke(); ctx.restore();
-
-        // Back Leg Foreground (Thigh shape)
-        ctx.save(); ctx.translate(30, 45); ctx.rotate(legSwing * Math.PI / 180);
-        ctx.beginPath(); ctx.moveTo(-5,0); ctx.quadraticCurveTo(-15, 20, -10, 45); ctx.lineTo(5, 45); ctx.quadraticCurveTo(10, 20, 5, 0); ctx.closePath();
-        ctx.fillStyle = "#1a1a1a"; ctx.fill(); ctx.stroke(); ctx.restore();
-
-        // Fierce Glowing Eye
-        ctx.fillStyle = "#ff0000";
-        ctx.shadowBlur = 15; ctx.shadowColor = "#ff0000";
-        ctx.beginPath(); ctx.arc(88, 28, 2.5, 0, Math.PI*2); ctx.fill();
-
-        ctx.restore();
-    }
-
-    function drawProceduralBunny(ctx, x, y, size, isMoving) {
-        ctx.save();
-        ctx.translate(x + size/2, y + size/2);
-        let scale = size / 50;
-        ctx.scale(scale, scale);
-
-        let hop = isMoving ? Math.abs(Math.sin(frameCount * 0.4)) * 12 : 0;
-        ctx.translate(-25, -25 - hop);
-
-        ctx.fillStyle = "#e0e0e0";
-        
-        ctx.save(); ctx.translate(35, 15); ctx.rotate((isMoving ? -20 : -10) * Math.PI / 180);
-        ctx.beginPath(); ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-        ctx.save(); ctx.translate(28, 18); ctx.rotate((isMoving ? -30 : -20) * Math.PI / 180);
-        ctx.beginPath(); ctx.ellipse(0, 0, 3, 10, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-
-        ctx.beginPath(); ctx.ellipse(25, 35, 12, 9, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(36, 25, 7, 7, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(12, 32, 4, 0, Math.PI*2); ctx.fill();
-        
-        ctx.save(); ctx.translate(25, 40); ctx.rotate((isMoving ? 45 : 0) * Math.PI / 180);
-        ctx.beginPath(); ctx.ellipse(0, 4, 3, 6, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-
-        ctx.restore();
-    }
-
-    // ==========================================
-    // 4. GAME INITIALIZATION (REPAIRED)
-    // ==========================================
-    const corners = [[5,5], [94,5], [5,94], [94,94]];
-
-    function startGame() {
-        let inputName = document.getElementById("player-name").value.trim().toUpperCase();
-        console.log("Attempting login for: " + inputName); // Debugging
-
-        if (!WHITELIST[inputName]) {
-            return alert("ACCESS DENIED: Identifier '"+inputName+"' not recognized.");
-        }
-        
-        // Setup Login
-        if (inputName === "JERRY") {
-            isAlpha = true;
-            document.getElementById("alpha-dashboard").style.display = "block";
-            myName = "THE ALPHA";
-        } else {
-            myName = inputName;
-        }
-        
-        document.getElementById("login-screen").style.display = "none";
-        document.getElementById("alpha-broadcast").innerText = "CONNECTING TO WASTES...";
-
-        // Attempt Firebase Connection with Error Catching
-        try {
-            myPlayerId = "player_" + Math.floor(Math.random() * 100000);
-            let spawn = isAlpha ? [50,50] : corners[Math.floor(Math.random() * corners.length)];
-
-            db.ref("players/" + myPlayerId).set({
-                name: myName, 
-                x: spawn[0], 
-                y: spawn[1], 
-                isAlpha: isAlpha, 
-                hp: 100, 
-                status: "playing", 
-                biteTime: 0, 
-                isMoving: false
-            }).then(() => {
-                console.log("Database connection successful.");
-                document.getElementById("alpha-broadcast").innerText = "THE HUNT IS LIVE.";
-                
-                // Initialize Listeners ONLY after successful write
-                db.ref("players").on("value", s => { players = s.val() || {}; checkMyState(); if(isAlpha) renderAlphaDashboard(); });
-                db.ref("rabbits").on("value", s => rabbits = s.val() || {});
-                db.ref("logs").on("value", s => updateLog(s));
-                db.ref("settings/alphaMessage").on("value", s => { if(s.val()) document.getElementById("alpha-broadcast").innerText = s.val(); });
-
-                // Start Loop
-                requestAnimationFrame(gameLoop); 
-                setInterval(wanderRabbits, 2500);
-            }).catch((error) => {
-                console.error("Firebase write error: ", error);
-                alert("DATABASE ERROR: " + error.message);
+        // --- Database Sync ---
+        function listenToDatabase() {
+            db.ref('alpha/message').on('value', snap => {
+                document.getElementById("dynamic-text").innerText = snap.val() || "";
             });
 
-        } catch (e) {
-            alert("Initialization Error: " + e.message);
+            db.ref('alphaLoc').on('value', snap => {
+                const pos = snap.val();
+                if (pos) {
+                    let a = document.getElementById("alpha-entity");
+                    if (!a) {
+                        a = document.createElement("div");
+                        a.id = "alpha-entity";
+                        a.className = "entity";
+                        a.innerHTML = `<div class="avatar alpha-avatar">🐺👑</div><div class="name-tag" style="color:var(--sovereign-gold);">The Alpha</div>`;
+                        document.getElementById("world-map").appendChild(a);
+                    }
+                    a.style.left = pos.x + "px";
+                    a.style.top = pos.y + "px";
+                }
+            });
+
+            db.ref('wolves').on('value', snap => {
+                const map = document.getElementById("world-map");
+                document.querySelectorAll('.wolf-entity').forEach(e => e.remove());
+                
+                const wolves = snap.val();
+                for (let id in wolves) {
+                    let w = wolves[id];
+                    let el = document.createElement("div");
+                    el.className = "entity wolf-entity";
+                    el.style.left = w.x + "px";
+                    el.style.top = w.y + "px";
+                    el.id = id;
+                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} HP</div>`;
+                    map.appendChild(el);
+
+                    if (id === myId && role === "wolf") {
+                        myHp = w.hp;
+                        checkDeathState();
+                    }
+                }
+            });
+
+            if (role === "alpha") {
+                db.ref('submissions').on('value', snap => {
+                    const list = document.getElementById("submission-list");
+                    list.innerHTML = "";
+                    const subs = snap.val();
+                    for (let key in subs) {
+                        let sub = subs[key];
+                        list.innerHTML += `
+                        <div class="submission-card" id="sub-${key}">
+                            <p style="margin:0 0 10px 0; font-weight:bold; color:var(--flesh);">Offering from: <span style="color:var(--blood-red);">${sub.wolfName}</span></p>
+                            <img src="${sub.image}" class="submission-img">
+                            <button class="alpha-btn" onclick="grantHp('${sub.wolfId}', 50, '${key}')" style="background:var(--blood-red); border:none; color:white;">Grant 50 HP & Accept</button>
+                            <button class="alpha-btn" onclick="deleteSub('${key}')" style="background:#333;">Delete</button>
+                        </div>`;
+                    }
+                });
+            }
         }
-    }
 
-    // ==========================================
-    // 5. LOGIC & NETWORKING
-    // ==========================================
-    function updateLog(s) {
-        let list = document.getElementById("log-list");
-        list.innerHTML = "";
-        if (!s.exists()) {
-            list.innerHTML = "<li>Ledger is clear.</li>";
-            return;
-        }
-        
-        // Convert to array and get last 5 to prevent UI overflow, but db keeps all unless wiped
-        let allLogs = [];
-        s.forEach(child => { allLogs.push(child.val()); });
-        let recentLogs = allLogs.slice(-6); // Show last 6 on screen
-        
-        recentLogs.forEach(log => {
-            list.innerHTML += `<li class="${log.status}">${log.text}</li>`;
-        });
-        list.scrollTop = list.scrollHeight;
-    }
+        // --- Game Loop (Movement & Camera) ---
+        function moveDir(dir, isPressing) { moveState[dir] = isPressing; }
 
-    function clearLedger() {
-        if(confirm("Are you sure you want to completely erase the judgment ledger?")) {
-            db.ref("logs").remove();
-            db.ref("logs").push({ text: "Ledger wiped clean by Alpha.", status: 'pending', time: Date.now() });
-        }
-    }
+        function gameLoop() {
+            if (!isDead) {
+                let speed = 6;
+                let moved = false;
 
-    function checkMyState() {
-        if (isAlpha) return;
-        const myData = players[myPlayerId];
-        if (!myData) return;
+                if (moveState.up) { myPos.y -= speed; moved = true; }
+                if (moveState.down) { myPos.y += speed; moved = true; }
+                if (moveState.left) { myPos.x -= speed; moved = true; }
+                if (moveState.right) { myPos.x += speed; moved = true; }
 
-        if (myData.hp <= 0 && myData.status === "playing") {
-            let spawn = corners[Math.floor(Math.random() * corners.length)];
-            db.ref("players/" + myPlayerId).update({ hp: 100, x: spawn[0], y: spawn[1] });
-            alert("FATAL BITE. You have been dominated and banished to the edge of the wastes.");
+                if (moved) {
+                    myPos.x = Math.max(20, Math.min(MAP_SIZE - 20, myPos.x));
+                    myPos.y = Math.max(20, Math.min(MAP_SIZE - 20, myPos.y));
+
+                    if (role === "alpha") db.ref('alphaLoc').set(myPos);
+                    else db.ref('wolves/' + myId).update({ x: myPos.x, y: myPos.y });
+                }
+            }
+
+            // Camera Tracking (Centers map around player)
+            const map = document.getElementById("world-map");
+            const screenW = window.innerWidth / 2;
+            const screenH = window.innerHeight / 2;
+            map.style.transform = `translate(${screenW - myPos.x}px, ${screenH - myPos.y}px)`;
+
+            requestAnimationFrame(gameLoop);
         }
 
-        document.getElementById("lock-screen").style.display = (myData.status === "review") ? "flex" : "none";
-        document.getElementById("victory-screen").style.display = (myData.status === "accepted") ? "flex" : "none";
-        document.getElementById("rejected-screen").style.display = (myData.status === "rejected") ? "flex" : "none";
-        if(myData.status !== "playing") document.getElementById("altar-modal").style.display = "none";
-    }
+        // --- Action / Combat ---
+        function actionButton() {
+            if (role === "wolf" && isDead) return;
 
-    function acknowledgeRejection() {
-        let spawn = corners[Math.floor(Math.random() * corners.length)];
-        db.ref("players/" + myPlayerId).update({ status: "playing", x: spawn[0], y: spawn[1], hp: 100, offering: "" });
-    }
+            // Animate
+            const myAvatarDiv = document.getElementById(role === 'alpha' ? 'alpha-entity' : myId);
+            if(myAvatarDiv) {
+                const avatarIcon = myAvatarDiv.querySelector('.avatar');
+                avatarIcon.classList.add("biting");
+                setTimeout(() => avatarIcon.classList.remove("biting"), 300);
+            }
 
-    function handleKeydown(e) {
-        if (e.key === "ArrowUp" || e.key === "w") move('up');
-        if (e.key === "ArrowDown" || e.key === "s") move('down');
-        if (e.key === "ArrowLeft" || e.key === "a") move('left');
-        if (e.key === "ArrowRight" || e.key === "d") move('right');
-        if (e.key === " ") attack();
-    }
+            if (role === "alpha") {
+                // Heal nearby wolves
+                db.ref('wolves').once('value', snap => {
+                    const wolves = snap.val();
+                    for (let id in wolves) {
+                        let dist = Math.hypot(wolves[id].x - myPos.x, wolves[id].y - myPos.y);
+                        if (dist <= HIT_RADIUS * 2) {
+                            db.ref('wolves/' + id + '/hp').set(wolves[id].hp + 30);
+                        }
+                    }
+                });
+            } else {
+                // Wolf Bite Logic
+                let hpGained = 0;
+                
+                // Bite Rabbits
+                rabbits.forEach(r => {
+                    if (r.alive && Math.hypot(r.x - myPos.x, r.y - myPos.y) <= HIT_RADIUS) {
+                        r.alive = false;
+                        let el = document.getElementById(r.id);
+                        if(el) el.remove();
+                        hpGained += 5;
+                    }
+                });
 
-    function move(dir) {
-        if (!players[myPlayerId] || players[myPlayerId].status !== "playing") return;
-        let p = players[myPlayerId];
-        let nx = p.x, ny = p.y;
-
-        if (dir === 'up') ny--; if (dir === 'down') ny++; if (dir === 'left') nx--; if (dir === 'right') nx++;
-
-        if (nx > 0 && nx < COLS && ny > 0 && ny < ROWS && map[ny][nx] !== 1) {
-            db.ref("players/" + myPlayerId).update({ x: nx, y: ny, isMoving: true });
-            setTimeout(() => db.ref("players/" + myPlayerId).update({ isMoving: false }), 200); 
-
-            if (map[ny][nx] === 3 && !isAlpha) document.getElementById("altar-modal").style.display = "flex";
-            else document.getElementById("altar-modal").style.display = "none";
+                // Bite Wolves
+                db.ref('wolves').once('value', snap => {
+                    const wolves = snap.val();
+                    for (let id in wolves) {
+                        if (id !== myId && Math.hypot(wolves[id].x - myPos.x, wolves[id].y - myPos.y) <= HIT_RADIUS) {
+                            let newHp = wolves[id].hp - 10;
+                            db.ref('wolves/' + id + '/hp').set(newHp);
+                            if(newHp <= 0 && wolves[id].hp > 0) hpGained += 20;
+                        }
+                    }
+                    if (hpGained > 0) db.ref('wolves/' + myId + '/hp').set(myHp + hpGained);
+                });
+            }
         }
-    }
 
-    function attack() {
-        if (!players[myPlayerId] || players[myPlayerId].status !== "playing" || isAlpha) return;
-        let p = players[myPlayerId];
-        db.ref("players/" + myPlayerId).update({ biteTime: Date.now() });
+        function spawnRabbits() {
+            const map = document.getElementById("world-map");
+            for(let i=0; i<15; i++) {
+                let r = { id: "rabbit_"+i, x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, alive: true };
+                rabbits.push(r);
+                let el = document.createElement("div");
+                el.className = "entity"; el.id = r.id;
+                el.innerHTML = `<div style="font-size:2rem;">🐇</div>`;
+                el.style.left = r.x + "px"; el.style.top = r.y + "px";
+                map.appendChild(el);
+            }
+        }
 
-        for (let id in players) {
-            if (id !== myPlayerId && players[id].status === "playing" && !players[id].isAlpha) {
-                if (Math.abs(players[id].x - p.x) <= 1 && Math.abs(players[id].y - p.y) <= 1) {
-                    db.ref("players/" + id).update({ hp: Math.max(0, players[id].hp - 35) });
+        // --- Death & Submission Lockdown ---
+        function checkDeathState() {
+            const nearDen = Math.hypot(myPos.x - DEN_POS.x, myPos.y - DEN_POS.y) < 150;
+            
+            if (myHp <= 0 || nearDen) {
+                isDead = true;
+                document.getElementById("d-pad").style.display = "none";
+                document.getElementById("action-btn").style.display = "none";
+                document.getElementById("submission-modal").style.display = "flex";
+            } else if (isDead && myHp > 0) {
+                // Reborn / Granted HP
+                isDead = false;
+                document.getElementById("d-pad").style.display = "grid";
+                document.getElementById("action-btn").style.display = "flex";
+                document.getElementById("submission-modal").style.display = "none";
+                
+                // Push slightly away from den if revived near den to prevent loop
+                if(nearDen) {
+                    myPos.y += 200;
+                    db.ref('wolves/' + myId).update({y: myPos.y});
                 }
             }
         }
 
-        for (let r in rabbits) {
-            let rb = rabbits[r];
-            if (Math.abs(rb.x - p.x) <= 1 && Math.abs(rb.y - p.y) <= 1) {
-                db.ref("players/" + myPlayerId).update({ hp: Math.min(100, p.hp + 20) });
-                db.ref("rabbits/" + r).update({ x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 });
+        // --- Photo Compression & Upload (No Storage DB Rules needed) ---
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById("file-name-display").innerText = "Processing image...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('compressor');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Max width/height to save DB space
+                    const MAX_DIM = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height && width > MAX_DIM) {
+                        height *= MAX_DIM / width;
+                        width = MAX_DIM;
+                    } else if (height > MAX_DIM) {
+                        width *= MAX_DIM / height;
+                        height = MAX_DIM;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG 0.6 quality (creates a lightweight Base64 string)
+                    compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    document.getElementById("file-name-display").innerText = "Offering Ready.";
+                    document.getElementById("final-submit-btn").style.display = "block";
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function uploadAndSubmit() {
+            if (!compressedImageBase64) return;
+            
+            document.getElementById("final-submit-btn").innerText = "Submitting...";
+            
+            db.ref('submissions').push({
+                wolfId: myId,
+                wolfName: myName,
+                image: compressedImageBase64,
+                timestamp: Date.now()
+            }).then(() => {
+                document.getElementById("final-submit-btn").innerText = "Offering Received. Await the Alpha.";
+                document.getElementById("final-submit-btn").disabled = true;
+            });
+        }
+
+        // --- Alpha Controls ---
+        function authorizeUser() {
+            const newName = document.getElementById("new-user-input").value.toLowerCase().trim();
+            if(newName) {
+                db.ref('allowed_users/' + newName).set(true);
+                alert(`'${newName}' has been authorized to hunt.`);
+                document.getElementById("new-user-input").value = "";
             }
         }
-    }
 
-    function wanderRabbits() {
-        if (!isAlpha) return; 
-        let rKeys = Object.keys(rabbits);
-        if(rKeys.length === 0) return;
-        let rKey = rKeys[Math.floor(Math.random() * rKeys.length)];
-        let rb = rabbits[rKey];
-        let md = Math.floor(Math.random() * 4);
-        let nx = rb.x, ny = rb.y;
-        if(md===0) nx++; if(md===1) nx--; if(md===2) ny++; if(md===3) ny--;
-        if(map[ny] && map[ny][nx] !== 1) {
-            db.ref("rabbits/" + rKey).update({x: nx, y: ny, isMoving: true});
-            setTimeout(()=> db.ref("rabbits/" + rKey).update({isMoving: false}), 400);
+        function sendAlphaText() {
+            const msg = document.getElementById("alpha-msg").value;
+            db.ref('alpha/message').set(msg);
         }
-    }
-
-    // ==========================================
-    // 6. RENDER ENGINE 
-    // ==========================================
-    function gameLoop() {
-        frameCount++;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (!players[myPlayerId]) { requestAnimationFrame(gameLoop); return; }
-
-        let me = players[myPlayerId];
+        function clearAlphaText() { db.ref('alpha/message').set(""); }
         
-        let targetCamX = (me.x * TILE_SIZE) - (canvas.width / 2) + (TILE_SIZE / 2);
-        let targetCamY = (me.y * TILE_SIZE) - (canvas.height / 2) + (TILE_SIZE / 2);
-        cameraX += (targetCamX - cameraX) * 0.1;
-        cameraY += (targetCamY - cameraY) * 0.1;
+        function grantHp(targetId, amount, subKey) {
+            db.ref('wolves/' + targetId + '/hp').once('value', snap => {
+                let current = snap.val() || 0;
+                db.ref('wolves/' + targetId + '/hp').set(current + amount);
+                db.ref('alpha/message').set(`${targetId.replace('wolf_', '')} has pleased the Sovereign. Progress rewarded.`);
+                deleteSub(subKey);
+            });
+        }
 
-        ctx.fillStyle = "#0a0705"; ctx.fillRect(0,0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#fff"; ctx.shadowBlur = 40; ctx.shadowColor = "#d4af37";
-        ctx.beginPath(); ctx.arc(canvas.width - 120, 120, 50, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
-
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLS; col++) {
-                let dx = (col * TILE_SIZE) - cameraX;
-                let dy = (row * TILE_SIZE) - cameraY;
-
-                if (dx > -TILE_SIZE && dx < canvas.width && dy > -TILE_SIZE && dy < canvas.height) {
-                    let tile = map[row][col];
-                    if (tile === 1) { 
-                        drawScenery(ctx, dx, dy, col, row); // Procedural Trees/Cacti
-                    } else if (tile === 2) { 
-                        ctx.fillStyle = "#110000"; ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
+        function deleteSub(subKey) {
+            db.ref('submissions/' + subKey).remove();
+        }
+    </script>
+</body>
+</html>
