@@ -17,6 +17,11 @@
             --flesh: #EAEAEA;
         }
 
+        * {
+            -webkit-user-select: none; /* Prevents text selection on rapid taps */
+            user-select: none;
+        }
+
         body, html {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
@@ -24,7 +29,7 @@
             background-color: var(--obsidian);
             color: var(--flesh);
             overflow: hidden; /* Prevents bounce scroll on iPhone */
-            touch-action: none; 
+            touch-action: none; /* Prevents default browser gestures */
         }
 
         /* --- Login Screen --- */
@@ -47,6 +52,8 @@
             padding: 15px; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px;
             border: 1px solid var(--blood-red); border-radius: 8px;
             background: #000; color: white; text-align: center;
+            -webkit-user-select: auto; /* Allow typing in inputs */
+            user-select: auto;
         }
 
         button {
@@ -105,27 +112,50 @@
         
         #dynamic-text { position: absolute; top: 10%; width: 100%; text-align: center; font-size: 2rem; color: var(--sovereign-gold); text-shadow: 2px 2px 8px #000; font-weight: bold; pointer-events: none; padding: 0 20px; box-sizing: border-box; }
 
-        /* D-Pad */
-        #d-pad { position: absolute; bottom: 30px; left: 20px; width: 150px; height: 150px; pointer-events: auto; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 5px; }
-        .dir-btn { background: rgba(138, 3, 3, 0.4); border: 1px solid var(--blood-red); border-radius: 10px; color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
-        .dir-btn:active { background: rgba(138, 3, 3, 0.8); }
-        #btn-up { grid-column: 2; grid-row: 1; }
-        #btn-left { grid-column: 1; grid-row: 2; }
-        #btn-right { grid-column: 3; grid-row: 2; }
-        #btn-down { grid-column: 2; grid-row: 3; }
+        /* Virtual Joystick */
+        #joystick-zone {
+            position: absolute; bottom: 30px; left: 20px;
+            width: 130px; height: 130px;
+            background: rgba(138, 3, 3, 0.2);
+            border: 2px solid var(--blood-red);
+            border-radius: 50%;
+            pointer-events: auto;
+            touch-action: none;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        #joystick-stick {
+            position: absolute; top: 50%; left: 50%;
+            width: 50px; height: 50px;
+            background: radial-gradient(circle, var(--blood-red), #4a0000);
+            border: 2px solid #000;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+        }
 
         /* Action Button */
-        #action-btn { position: absolute; bottom: 50px; right: 20px; width: 100px; height: 100px; background: radial-gradient(circle, var(--blood-red), #4a0000); border: 2px solid #000; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 20px rgba(138,3,3,0.8); }
+        #action-btn { 
+            position: absolute; bottom: 45px; right: 20px; 
+            width: 100px; height: 100px; 
+            background: radial-gradient(circle, var(--blood-red), #4a0000); 
+            border: 2px solid #000; border-radius: 50%; 
+            color: white; font-weight: bold; font-size: 1.2rem; 
+            display: flex; align-items: center; justify-content: center; 
+            pointer-events: auto; box-shadow: 0 0 20px rgba(138,3,3,0.8); 
+            touch-action: none;
+        }
         #action-btn:active { transform: scale(0.9); }
 
         /* --- Alpha Dashboard --- */
         #alpha-menu { position: absolute; top: 10px; right: 10px; pointer-events: auto; background: rgba(0,0,0,0.8); border: 1px solid var(--sovereign-gold); border-radius: 8px; padding: 10px; max-width: 60%; max-height: 80vh; overflow-y: auto; display: none; }
         #alpha-menu h3 { color: var(--sovereign-gold); margin: 0 0 10px 0; font-size: 1.2rem; }
-        .alpha-input { width: 90%; padding: 8px; margin-bottom: 5px; background: #222; color: white; border: 1px solid #555; }
+        .alpha-input { width: 90%; padding: 8px; margin-bottom: 5px; background: #222; color: white; border: 1px solid #555; -webkit-user-select: auto; user-select: auto;}
         .alpha-btn { width: 100%; padding: 8px; font-size: 0.9rem; background: #333; color: var(--sovereign-gold); border: 1px solid var(--sovereign-gold); margin-bottom: 10px; }
         
         .submission-card { background: #111; border: 1px solid var(--blood-red); padding: 10px; margin-bottom: 10px; border-radius: 5px; text-align: center; }
-        .submission-img { max-width: 100%; max-height: 200px; border-radius: 5px; margin-bottom: 10px; }
+        .submission-img { max-width: 100%; max-height: 200px; border-radius: 5px; margin-bottom: 10px; pointer-events: auto; -webkit-touch-callout: default; }
 
         /* --- Submission Modal --- */
         #submission-modal { display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.95); z-index: 500; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; padding: 20px; box-sizing: border-box; text-align: center; }
@@ -134,7 +164,6 @@
         .custom-file-upload { display: inline-block; padding: 15px 30px; cursor: pointer; background: #222; border: 2px dashed var(--sovereign-gold); color: var(--sovereign-gold); border-radius: 8px; font-size: 1.2rem; margin-bottom: 20px; width: 80%; }
         input[type="file"] { display: none; }
         
-        /* Canvas for silent compression */
         #compressor { display: none; }
     </style>
 </head>
@@ -158,14 +187,11 @@
         <div id="ui-overlay">
             <div id="dynamic-text"></div>
             
-            <div id="d-pad">
-                <div class="dir-btn" id="btn-up" ontouchstart="moveDir('up', true)" ontouchend="moveDir('up', false)">▲</div>
-                <div class="dir-btn" id="btn-left" ontouchstart="moveDir('left', true)" ontouchend="moveDir('left', false)">◀</div>
-                <div class="dir-btn" id="btn-right" ontouchstart="moveDir('right', true)" ontouchend="moveDir('right', false)">▶</div>
-                <div class="dir-btn" id="btn-down" ontouchstart="moveDir('down', true)" ontouchend="moveDir('down', false)">▼</div>
+            <div id="joystick-zone">
+                <div id="joystick-stick"></div>
             </div>
 
-            <div id="action-btn" ontouchstart="actionButton()">BITE</div>
+            <div id="action-btn">BITE</div>
         </div>
 
         <div id="alpha-menu">
@@ -213,18 +239,20 @@
         let role = "";
         let myName = "";
         let myId = "";
-        let myPos = { x: 1000, y: 1000 }; // Center of 2000x2000 map
+        let myPos = { x: 1000, y: 1000 };
         let myHp = 50;
         let isDead = false;
         const MAP_SIZE = 2000;
         const DEN_POS = { x: 1000, y: 500 }; 
         const HIT_RADIUS = 80;
 
+        // Movement State variables
         let rabbits = [];
-        let moveState = { up: false, down: false, left: false, right: false };
+        let moveState = { up: false, down: false, left: false, right: false }; // Keyboard
+        let joyV = { x: 0, y: 0 }; // Joystick vector
         let compressedImageBase64 = null;
 
-        // Ensure "The Alpha" and "Amanda" exist on first load if DB is empty
+        // Ensure default users exist
         db.ref('allowed_users').once('value', snap => {
             if(!snap.exists()) {
                 db.ref('allowed_users/the alpha').set(true);
@@ -240,7 +268,6 @@
 
             if(inputLower === "") return;
 
-            // Check Allowed Users
             db.ref('allowed_users/' + inputLower).once('value', snap => {
                 if(snap.exists()) {
                     myName = rawInput;
@@ -264,6 +291,7 @@
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("game-viewport").style.display = "block";
             initDecor();
+            setupControls();
 
             if (role === "alpha") {
                 document.getElementById("alpha-menu").style.display = "block";
@@ -273,7 +301,7 @@
                 myPos = { x: DEN_POS.x, y: DEN_POS.y }; 
                 db.ref('alphaLoc').set(myPos); 
             } else {
-                myPos = { x: 1000, y: 1500 }; // Wolves spawn bottom half
+                myPos = { x: 1000, y: 1500 }; 
                 db.ref('wolves/' + myId).set({ name: myName, hp: 50, x: myPos.x, y: myPos.y });
                 spawnRabbits();
             }
@@ -284,8 +312,6 @@
 
         function initDecor() {
             const map = document.getElementById("world-map");
-            
-            // The Den
             let den = document.createElement("div");
             den.className = "entity";
             den.style.left = DEN_POS.x + "px";
@@ -293,7 +319,6 @@
             den.innerHTML = `<div style="font-size:5rem;">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:1.5rem; text-shadow: 2px 2px 5px black;">The Den</div>`;
             map.appendChild(den);
 
-            // Cacti / Bushes
             const flora = ["🌵", "🌿", "🦂", "🦴"];
             for(let i=0; i<60; i++) {
                 let f = document.createElement("div");
@@ -303,6 +328,71 @@
                 f.innerText = flora[Math.floor(Math.random() * flora.length)];
                 map.appendChild(f);
             }
+        }
+
+        // --- Controller Setup (Joystick & Keyboard) ---
+        function setupControls() {
+            const zone = document.getElementById('joystick-zone');
+            const stick = document.getElementById('joystick-stick');
+            const maxRadius = 45; // Max distance stick can visually move
+
+            function handleJoy(e) {
+                e.preventDefault(); // STOPS screen zoom/scroll
+                if (e.targetTouches.length === 0) {
+                    // Finger lifted
+                    joyV.x = 0; joyV.y = 0;
+                    stick.style.transform = `translate(-50%, -50%)`;
+                    return;
+                }
+                
+                const touch = e.targetTouches[0];
+                const rect = zone.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                // Clamp visual stick inside base
+                if (dist > maxRadius) {
+                    dx = (dx / dist) * maxRadius;
+                    dy = (dy / dist) * maxRadius;
+                }
+
+                stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                
+                // Normalize vector for game speed
+                joyV.x = dx / maxRadius;
+                joyV.y = dy / maxRadius;
+            }
+
+            zone.addEventListener('touchstart', handleJoy, {passive: false});
+            zone.addEventListener('touchmove', handleJoy, {passive: false});
+            zone.addEventListener('touchend', handleJoy, {passive: false});
+            zone.addEventListener('touchcancel', handleJoy, {passive: false});
+
+            // Action Button Setup (Also prevents zoom)
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                actionButton();
+            }, {passive: false});
+
+            // Keyboard Setup (Desktop Fallback)
+            window.addEventListener('keydown', (e) => {
+                if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveState.up = true;
+                if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveState.down = true;
+                if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") moveState.left = true;
+                if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") moveState.right = true;
+                if(e.key === " " || e.key === "Enter") actionButton();
+            });
+            window.addEventListener('keyup', (e) => {
+                if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveState.up = false;
+                if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveState.down = false;
+                if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") moveState.left = false;
+                if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") moveState.right = false;
+            });
         }
 
         // --- Database Sync ---
@@ -369,17 +459,25 @@
         }
 
         // --- Game Loop (Movement & Camera) ---
-        function moveDir(dir, isPressing) { moveState[dir] = isPressing; }
-
         function gameLoop() {
             if (!isDead) {
                 let speed = 6;
                 let moved = false;
+                
+                // Calculate total velocity (combine keyboard + joystick)
+                let vx = joyV.x * speed;
+                let vy = joyV.y * speed;
 
-                if (moveState.up) { myPos.y -= speed; moved = true; }
-                if (moveState.down) { myPos.y += speed; moved = true; }
-                if (moveState.left) { myPos.x -= speed; moved = true; }
-                if (moveState.right) { myPos.x += speed; moved = true; }
+                if (moveState.up) vy -= speed;
+                if (moveState.down) vy += speed;
+                if (moveState.left) vx -= speed;
+                if (moveState.right) vx += speed;
+
+                if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+                    myPos.x += vx;
+                    myPos.y += vy;
+                    moved = true;
+                }
 
                 if (moved) {
                     myPos.x = Math.max(20, Math.min(MAP_SIZE - 20, myPos.x));
@@ -390,7 +488,7 @@
                 }
             }
 
-            // Camera Tracking (Centers map around player)
+            // Camera Tracking
             const map = document.getElementById("world-map");
             const screenW = window.innerWidth / 2;
             const screenH = window.innerHeight / 2;
@@ -403,7 +501,6 @@
         function actionButton() {
             if (role === "wolf" && isDead) return;
 
-            // Animate
             const myAvatarDiv = document.getElementById(role === 'alpha' ? 'alpha-entity' : myId);
             if(myAvatarDiv) {
                 const avatarIcon = myAvatarDiv.querySelector('.avatar');
@@ -412,7 +509,6 @@
             }
 
             if (role === "alpha") {
-                // Heal nearby wolves
                 db.ref('wolves').once('value', snap => {
                     const wolves = snap.val();
                     for (let id in wolves) {
@@ -423,10 +519,7 @@
                     }
                 });
             } else {
-                // Wolf Bite Logic
                 let hpGained = 0;
-                
-                // Bite Rabbits
                 rabbits.forEach(r => {
                     if (r.alive && Math.hypot(r.x - myPos.x, r.y - myPos.y) <= HIT_RADIUS) {
                         r.alive = false;
@@ -436,7 +529,6 @@
                     }
                 });
 
-                // Bite Wolves
                 db.ref('wolves').once('value', snap => {
                     const wolves = snap.val();
                     for (let id in wolves) {
@@ -470,17 +562,15 @@
             
             if (myHp <= 0 || nearDen) {
                 isDead = true;
-                document.getElementById("d-pad").style.display = "none";
+                document.getElementById("joystick-zone").style.display = "none";
                 document.getElementById("action-btn").style.display = "none";
                 document.getElementById("submission-modal").style.display = "flex";
             } else if (isDead && myHp > 0) {
-                // Reborn / Granted HP
                 isDead = false;
-                document.getElementById("d-pad").style.display = "grid";
+                document.getElementById("joystick-zone").style.display = "block";
                 document.getElementById("action-btn").style.display = "flex";
                 document.getElementById("submission-modal").style.display = "none";
                 
-                // Push slightly away from den if revived near den to prevent loop
                 if(nearDen) {
                     myPos.y += 200;
                     db.ref('wolves/' + myId).update({y: myPos.y});
@@ -488,7 +578,7 @@
             }
         }
 
-        // --- Photo Compression & Upload (No Storage DB Rules needed) ---
+        // --- Photo Compression & Upload ---
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -501,8 +591,6 @@
                 img.onload = function() {
                     const canvas = document.getElementById('compressor');
                     const ctx = canvas.getContext('2d');
-                    
-                    // Max width/height to save DB space
                     const MAX_DIM = 600;
                     let width = img.width;
                     let height = img.height;
@@ -519,7 +607,6 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Compress to JPEG 0.6 quality (creates a lightweight Base64 string)
                     compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
                     
                     document.getElementById("file-name-display").innerText = "Offering Ready.";
